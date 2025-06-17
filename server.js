@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -13,7 +14,9 @@ const app = express();
 
 // Configuration CORS
 app.use(cors({
-  origin: true, // Permet toutes les origines en développement
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://ton-domaine.com', 'https://www.ton-domaine.com'] 
+    : true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Accept', 'Authorization']
@@ -52,14 +55,28 @@ const upload = multer({
 });
 
 // Connexion à MongoDB
-mongoose.connect('mongodb://localhost:27017/crm-call-center')
+mongoose.connect(process.env.MONGODB_URI)
 .then(() => console.log('Connecté à MongoDB'))
 .catch(err => console.error('Erreur de connexion à MongoDB:', err));
+
+// Route de santé pour Render
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // Routes
 app.use('/api', registrationRoutes);
 app.use('/api', shopifyRoutes);
 app.use('/api', glnetRoutes);
+
+// Servir les fichiers statiques du frontend en production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../build')));
+  
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../build', 'index.html'));
+  });
+}
 
 // Middleware pour gérer les erreurs 404
 app.use((req, res, next) => {

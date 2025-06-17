@@ -11,23 +11,23 @@ const sendToGlnet = async (req, res) => {
     // Utiliser directement le payload reçu
     const payload = order;
     console.log('gl-net: Payload formaté:', JSON.stringify(payload, null, 2));
-    console.log('gl-net: URL utilisée:', 'https://traxis.app/external/api/shipments/booking');
+    console.log('gl-net: URL utilisée:', process.env.GLNET_API_URL);
     console.log('gl-net: Headers envoyés:', JSON.stringify({
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'apiKey': '167ff33ef0f14631924a213281a6b217'
+      'apiKey': process.env.GLNET_API_KEY
     }, null, 2));
     console.log('gl-net: Envoi à l\'API...');
 
     try {
       const response = await axios({
         method: 'POST',
-        url: 'https://traxis.app/external/api/shipments/booking',
+        url: process.env.GLNET_API_URL,
         data: payload,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'apiKey': '167ff33ef0f14631924a213281a6b217'
+          'apiKey': process.env.GLNET_API_KEY
         },
         validateStatus: function (status) {
           return status >= 200 && status < 500; // Accepte tous les statuts entre 200 et 499

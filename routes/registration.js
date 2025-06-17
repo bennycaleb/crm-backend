@@ -1,3 +1,8 @@
+lbc@MacBook-Air-de-Lewere CRM-J-main %    git remote remove origin
+   git remote add origin https://github.com/bennycaleb/crm-backend.git
+fatal: not a git repository (or any of the parent directories): .git
+fatal: not a git repository (or any of the parent directories): .git
+lbc@MacBook-Air-de-Lewere CRM-J-main % 
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
