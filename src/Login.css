@@ -1,0 +1,100 @@
+.login-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-modal {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  padding: 36px 32px 28px 32px;
+  min-width: 340px;
+  max-width: 95vw;
+  text-align: center;
+}
+
+.login-brand-title {
+  font-size: 1.2rem;
+  margin-bottom: 18px;
+  font-weight: 500;
+}
+.login-brand-main {
+  font-weight: bold;
+  color: #222;
+}
+.login-brand-accent {
+  color: #e53935;
+  font-weight: bold;
+}
+
+.input-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 18px;
+  justify-content: center;
+}
+.input-row label {
+  display: block;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+.input-row input {
+  width: 140px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid #cfd8dc;
+  font-size: 1rem;
+  margin-bottom: 6px;
+}
+
+.role-row {
+  margin-bottom: 18px;
+  font-size: 0.98rem;
+}
+.role-select {
+  margin-left: 8px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #cfd8dc;
+  font-size: 1rem;
+}
+
+.send-btn {
+  width: 100%;
+  padding: 10px 0;
+  border-radius: 20px;
+  border: none;
+  background: linear-gradient(90deg, #2193b0 0%, #6dd5ed 100%);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: background 0.2s;
+}
+.send-btn:hover {
+  background: linear-gradient(90deg, #6dd5ed 0%, #2193b0 100%);
+}
+
+.login-links {
+  margin-top: 10px;
+  font-size: 0.98rem;
+}
+.link-button {
+  color: #2193b0;
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+.error-message {
+  color: #e53935;
+  margin-bottom: 10px;
+  font-size: 1rem;
+}

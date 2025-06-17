@@ -1,0 +1,1039 @@
+.crm-legacy-container {
+  background: #f7f8fa;
+  min-height: 100vh;
+  padding: 0;
+}
+
+.crm-tabs {
+  display: flex;
+  background: linear-gradient(90deg, #e53935 80%, #ffb300 100%);
+  padding: 0 20px;
+  height: 48px;
+  align-items: flex-end;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 2px 8px rgba(229,57,53,0.08);
+}
+
+.crm-tab {
+  color: #fff;
+  font-weight: 500;
+  font-size: 1.08rem;
+  padding: 0 22px 7px 22px;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-right: 8px;
+  transition: border 0.2s, background 0.2s;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.crm-tab.active {
+  background: #fff;
+  color: #e53935;
+  border-bottom: 3px solid #e53935;
+  border-radius: 8px 8px 0 0;
+}
+
+.crm-legacy-content {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0 0 0;
+}
+
+.crm-form {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  padding: 28px 32px 18px 32px;
+  min-width: 900px;
+  max-width: 1100px;
+  width: 100%;
+  border: 1.5px solid #e0e0e0;
+}
+
+.crm-section-title {
+  color: #e53935;
+  font-size: 1.13rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  margin-top: 18px;
+  letter-spacing: 0.5px;
+}
+
+.crm-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px 18px;
+  margin-bottom: 18px;
+}
+
+.crm-field label {
+  display: block;
+  font-size: 0.98rem;
+  color: #444;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.crm-field input,
+.crm-field select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 5px;
+  border: 1.2px solid #cfd8dc;
+  font-size: 1rem;
+  background: #fff;
+  transition: border 0.2s;
+}
+
+.crm-field input:focus,
+.crm-field select:focus {
+  border: 1.5px solid #e53935;
+  outline: none;
+}
+
+.crm-panier-section {
+  margin-bottom: 18px;
+}
+
+.crm-panier-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.crm-panier-row select,
+.crm-panier-row input {
+  width: auto;
+  min-width: 110px;
+}
+
+.crm-panier-price {
+  font-weight: 600;
+  color: #e53935;
+  font-size: 1.08rem;
+}
+
+.crm-add-product {
+  color: #1976d2;
+  font-size: 0.98rem;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-left: 2px;
+}
+
+.crm-comments-section {
+  margin-bottom: 12px;
+}
+
+.crm-comments-section label {
+  display: block;
+  font-size: 0.98rem;
+  color: #444;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.crm-comments-section textarea {
+  width: 100%;
+  border-radius: 5px;
+  border: 1.2px solid #cfd8dc;
+  padding: 8px 10px;
+  font-size: 1rem;
+  background: #fff;
+  resize: vertical;
+  min-height: 32px;
+  transition: border 0.2s;
+}
+
+.crm-comments-section textarea:focus {
+  border: 1.5px solid #e53935;
+  outline: none;
+}
+
+.crm-section-flex {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 18px;
+}
+
+.crm-section-block {
+  background: #fafbfc;
+  border: 1.2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 18px 22px 12px 22px;
+  margin-bottom: 18px;
+  flex: 1;
+  min-width: 0;
+}
+
+.crm-controls-block {
+  max-width: 260px;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.crm-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn-control {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 170px;
+  min-height: 58px;
+  margin-bottom: 16px;
+  border-radius: 30px;
+  font-size: 1.13rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 0 0 6px 0;
+}
+.btn-control .status-timer {
+  display: block;
+  margin: 4px 0 0 0;
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #fff;
+  background: #1976d2;
+  border-radius: 12px;
+  padding: 2px 18px;
+  min-width: 110px;
+  text-align: center;
+}
+.btn-control.connected { background: #4caf50; color: #fff; }
+.btn-control.offline { background: #bdbdbd; color: #fff; }
+.btn-control.pause { background: #ffb300; color: #fff; }
+.btn-control.formation { background: #1976d2; color: #fff; }
+.btn-control.selected {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+  outline: 2px solid #e53935;
+}
+
+.crm-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.crm-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 18px;
+}
+.crm-grid-4 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 18px;
+}
+.crm-grid-5 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  gap: 18px;
+}
+
+.crm-section-title {
+  color: #e53935;
+  font-size: 1.08rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  margin-top: 0;
+  letter-spacing: 0.5px;
+}
+
+.crm-field label {
+  display: block;
+  font-size: 0.97rem;
+  color: #444;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.crm-field input,
+.crm-field select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 5px;
+  border: 1.2px solid #cfd8dc;
+  font-size: 1rem;
+  background: #fff;
+  transition: border 0.2s;
+}
+
+.crm-field input:focus,
+.crm-field select:focus {
+  border: 1.5px solid #e53935;
+  outline: none;
+}
+
+.phonecall-box {
+  background: #fff3e0;
+  border: 1.5px solid #ffb300;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  padding: 18px 28px 12px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  box-shadow: 0 2px 8px rgba(255,179,0,0.07);
+}
+.phonecall-info {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 1.08rem;
+  margin-bottom: 6px;
+}
+.phonecall-label {
+  color: #e53935;
+  font-weight: 600;
+  margin-right: 6px;
+}
+.phonecall-number {
+  font-weight: 600;
+  color: #222;
+  background: #fff;
+  border-radius: 5px;
+  padding: 2px 10px;
+  border: 1px solid #ffe082;
+  margin-right: 10px;
+}
+.btn-phonecall {
+  border: none;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+  transition: background 0.2s;
+}
+.btn-phonecall.green { background: #43a047; }
+.btn-phonecall.red { background: #e53935; }
+.btn-phonecall svg { display: block; }
+.phonecall-ended {
+  color: #888;
+  font-weight: 500;
+  margin-left: 10px;
+}
+.phonecall-status {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-left: 2px;
+  margin-top: 2px;
+}
+.phonecall-status.waiting { color: #ffb300; }
+.phonecall-status.in-call { color: #43a047; }
+.phonecall-status.ended { color: #e53935; }
+
+.phonecall-timer {
+  margin-left: 16px;
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: #1976d2;
+  background: #e3f2fd;
+  border-radius: 5px;
+  padding: 2px 10px;
+  border: 1px solid #90caf9;
+}
+
+.crm-brand {
+  width: auto;
+  text-align: left;
+  margin: 18px 0 8px 32px;
+  display: flex;
+  align-items: center;
+}
+.crm-brand-main {
+  font-family: 'Montserrat', 'Segoe UI', 'Arial', sans-serif;
+  font-size: 2.3rem;
+  font-weight: 900;
+  letter-spacing: 2.5px;
+  color: #1a1a1a;
+  text-shadow: 0 3px 12px rgba(229,57,53,0.10), 0 1px 0 #fff;
+  line-height: 1.1;
+  background: none;
+  -webkit-background-clip: initial;
+  -webkit-text-fill-color: initial;
+  background-clip: initial;
+}
+.crm-brand-accent {
+  color: #e53935;
+  font-family: 'Montserrat', 'Segoe UI', 'Arial', sans-serif;
+  font-weight: 900;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  filter: brightness(1.1) drop-shadow(0 1px 0 #fff6);
+}
+
+.crm-controls-block-belowcall {
+  margin: 0 0 18px 0;
+  padding-left: 0;
+  max-width: 420px;
+  min-width: 220px;
+  background: #fafbfc;
+  border: 1.2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 18px 22px 12px 22px;
+  box-shadow: 0 1px 4px rgba(229,57,53,0.04);
+}
+
+.phonecall-ringing-ui {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+.phonecall-anim-icon {
+  margin-bottom: 8px;
+  animation: vibrate 0.5s linear infinite;
+}
+@keyframes vibrate {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+  100% { transform: translateX(0); }
+}
+.phonecall-ringing-label {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #e53935;
+  margin-bottom: 10px;
+  margin-left: 2px;
+}
+.phonecall-ringing-btns {
+  display: flex;
+  gap: 18px;
+}
+.btn-phonecall.big {
+  font-size: 1.08rem;
+  padding: 10px 22px;
+  min-width: 120px;
+  min-height: 48px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(229,57,53,0.08);
+}
+.phonecall-inprogress-ui {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 8px;
+}
+.phonecall-inprogress-label {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #43a047;
+  margin-right: 10px;
+}
+.phonecall-ended-ui {
+  padding: 10px 0 0 0;
+}
+
+.btn-save-order {
+  background: #e53935;
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  padding: 14px 48px;
+  font-size: 1.18rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(229,57,53,0.10);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-save-order:hover {
+  background: #b71c1c;
+  box-shadow: 0 4px 16px rgba(229,57,53,0.18);
+}
+.order-saved-msg {
+  display: inline-block;
+  margin-left: 18px;
+  color: #43a047;
+  font-weight: 700;
+  font-size: 1.08rem;
+  vertical-align: middle;
+  animation: fadeIn 0.5s;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.treatment-timer-block {
+  margin: 18px 0 10px 0;
+  padding: 14px 24px;
+  background: #fffbe7;
+  border: 1.5px solid #ffb300;
+  border-radius: 8px;
+  font-size: 1.13rem;
+  font-weight: 600;
+  color: #222;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(255,179,0,0.07);
+}
+.treatment-timer-label {
+  color: #e53935;
+  font-weight: 700;
+  margin-right: 8px;
+}
+.treatment-timer-value {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: #1976d2;
+  background: #e3f2fd;
+  border-radius: 5px;
+  padding: 2px 14px;
+  border: 1px solid #90caf9;
+  margin-right: 8px;
+}
+.treatment-timer-value.late {
+  color: #e53935;
+  background: #ffebee;
+  border: 1.5px solid #e53935;
+  animation: blink 1s steps(2, start) infinite;
+}
+.treatment-timer-warning {
+  color: #e53935;
+  font-weight: 700;
+  margin-left: 8px;
+  font-size: 1.08rem;
+}
+@keyframes blink {
+  to { visibility: hidden; }
+}
+
+.crm-offline-msg {
+  margin: 32px auto 0 auto;
+  max-width: 520px;
+  background: #fff3e0;
+  border: 1.5px solid #ffb300;
+  border-radius: 10px;
+  padding: 38px 32px 32px 32px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(255,179,0,0.08);
+}
+.crm-offline-msg-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #e53935;
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+.crm-offline-msg-text {
+  font-size: 1.08rem;
+  color: #222;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.status-timer {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 1.01rem;
+  font-weight: 700;
+  color: #1976d2;
+  background: #e3f2fd;
+  border-radius: 5px;
+  padding: 2px 10px;
+  border: 1px solid #90caf9;
+  min-width: 80px;
+}
+.status-timer.late {
+  color: #e53935;
+  background: #ffebee;
+  border: 1.5px solid #e53935;
+  animation: blink 1s steps(2, start) infinite;
+}
+.status-warning {
+  color: #e53935;
+  font-weight: 700;
+  margin-left: 6px;
+  font-size: 0.98rem;
+  vertical-align: middle;
+}
+
+.waiting-calls-msg {
+  margin: 24px 0 18px 0;
+  padding: 22px 0 18px 0;
+  text-align: center;
+  font-size: 1.18rem;
+  color: #1976d2;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.waiting-calls-icon {
+  font-size: 2.2rem;
+  margin-bottom: 2px;
+}
+.waiting-calls-text {
+  font-size: 1.18rem;
+  color: #1976d2;
+  font-weight: 700;
+}
+.btn-newcall {
+  margin-top: 8px;
+  background: #e53935;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 28px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(229,57,53,0.10);
+  transition: background 0.2s;
+}
+.btn-newcall:hover {
+  background: #b71c1c;
+}
+
+.waiting-calls-center {
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.waiting-calls-bottomleft {
+  position: fixed;
+  left: 32px;
+  bottom: 32px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.recall-block {
+  margin: 32px auto 0 auto;
+  max-width: 420px;
+  background: #fff3e0;
+  border: 1.5px solid #ffb300;
+  border-radius: 10px;
+  padding: 24px 24px 18px 24px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(255,179,0,0.08);
+}
+.recall-msg-missed {
+  color: #e53935;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.recall-msg-ended {
+  color: #1976d2;
+  font-size: 1.08rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.btn-recall {
+  background: #43a047;
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  padding: 12px 38px;
+  font-size: 1.13rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(67,160,71,0.10);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-recall:hover {
+  background: #2e7d32;
+  box-shadow: 0 4px 16px rgba(67,160,71,0.18);
+}
+
+.crm-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-bottom: 1.5px solid #e0e0e0;
+  padding: 0 0 0 0;
+  min-height: 54px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.btn-logout {
+  margin-right: 32px;
+  background: #e53935;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 32px;
+  font-size: 1.08rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(229,57,53,0.10);
+  transition: background 0.2s;
+}
+.btn-logout:hover {
+  background: #b71c1c;
+}
+
+.admincrm-container {
+  background: #f7f8fa;
+  min-height: 100vh;
+  padding: 0;
+}
+.admincrm-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-bottom: 1.5px solid #e0e0e0;
+  padding: 0 0 0 0;
+  min-height: 54px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.admincrm-tabs {
+  display: flex;
+  gap: 2px;
+}
+.admincrm-tabs button {
+  background: none;
+  border: none;
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: #888;
+  padding: 0 28px 7px 28px;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: color 0.2s, border 0.2s;
+  height: 54px;
+}
+.admincrm-tabs button.active {
+  color: #e53935;
+  border-bottom: 3px solid #e53935;
+  background: #fff;
+}
+.admincrm-brand {
+  font-family: 'Montserrat', 'Segoe UI', 'Arial', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #1a1a1a;
+  margin-right: 32px;
+  letter-spacing: 1.5px;
+}
+.admincrm-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 36px 24px 24px 24px;
+}
+.admincrm-stats-filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.admincrm-stats-filters button {
+  background: #e3f2fd;
+  color: #1976d2;
+  border: none;
+  border-radius: 18px;
+  padding: 8px 24px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.admincrm-stats-block, .admincrm-orders-block, .admincrm-search-results, .admincrm-vendeurs-block {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(229,57,53,0.04);
+  padding: 24px 18px;
+  margin-bottom: 24px;
+  min-height: 80px;
+}
+.admincrm-search-block {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.admincrm-search-block input {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1.2px solid #cfd8dc;
+  font-size: 1rem;
+  background: #fafbfc;
+}
+.admincrm-search-block button {
+  background: #e53935;
+  color: #fff;
+  border: none;
+  border-radius: 18px;
+  padding: 8px 24px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-logistique {
+  background: #43a047;
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  padding: 12px 38px;
+  font-size: 1.13rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(67,160,71,0.10);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-logistique:hover {
+  background: #2e7d32;
+  box-shadow: 0 4px 16px rgba(67,160,71,0.18);
+}
+
+.admincrm-logout-bottomright {
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.crm-root {
+  min-height: 100vh;
+  background: #f7f8fa;
+}
+
+.crm-header {
+  padding: 18px 0 10px 32px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+}
+.crm-brand {
+  color: #222;
+}
+.crm-brand-accent {
+  color: #e53935;
+}
+
+.crm-main {
+  display: flex;
+  max-width: 1400px;
+  margin: 32px auto 0 auto;
+  gap: 32px;
+}
+
+.crm-left {
+  width: 270px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.crm-section {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 18px 18px 14px 18px;
+  margin-bottom: 0;
+}
+
+.crm-callbox {
+  margin-bottom: 0;
+}
+.crm-call-title {
+  font-weight: bold;
+  color: #e53935;
+  margin-bottom: 10px;
+}
+.crm-call-btns {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.crm-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 0;
+  transition: background 0.2s;
+}
+.crm-btn-green {
+  background: #4caf50;
+  color: #fff;
+}
+.crm-btn-red {
+  background: #e53935;
+  color: #fff;
+}
+.crm-btn-simuler {
+  background: #e53935;
+  color: #fff;
+  margin-top: 12px;
+  width: 100%;
+}
+.crm-controls-title {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.crm-status-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  color: #fff;
+  font-size: 1rem;
+  padding: 8px 0;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.2s, box-shadow 0.2s;
+}
+.crm-status-btn.selected {
+  opacity: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+
+.crm-right {
+  flex: 1;
+}
+.crm-form {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 24px 28px 18px 28px;
+}
+.crm-section-title {
+  font-weight: bold;
+  color: #e53935;
+  margin-bottom: 10px;
+  font-size: 1.08rem;
+}
+.crm-row {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+.crm-row > div {
+  flex: 1;
+}
+.crm-row label {
+  display: block;
+  font-size: 0.97rem;
+  margin-bottom: 3px;
+  color: #444;
+}
+.crm-row input {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1px solid #cfd8dc;
+  font-size: 1rem;
+  margin-bottom: 2px;
+}
+.crm-form select {
+  padding: 7px 12px;
+  border-radius: 7px;
+  border: 1px solid #cfd8dc;
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+.crm-cart-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+.crm-cart-table th, .crm-cart-table td {
+  border: 1px solid #e0e0e0;
+  padding: 6px 8px;
+  text-align: left;
+}
+.crm-cart-table th {
+  background: #f7f8fa;
+  color: #222;
+  font-size: 0.98rem;
+}
+.crm-cart-table input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+}
+.crm-btn-add {
+  background: #1976d2;
+  color: #fff;
+  margin-top: 6px;
+  border-radius: 8px;
+  padding: 7px 18px;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.crm-btn-add:hover {
+  background: #1565c0;
+}
+
+.address-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.suggestion-item:hover {
+  background-color: #f5f5f5;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
