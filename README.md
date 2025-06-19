@@ -32,3 +32,5 @@ L'API sera disponible sur http://localhost:5000/api/orders
 - `models/User.js` : schéma des utilisateurs
 - `models/Log.js` : schéma des logs/journalisation
 - `server.js` : serveur Express principal 
+
+# Trigger redeploy on Render 
