@@ -33,4 +33,4 @@ L'API sera disponible sur http://localhost:5000/api/orders
 - `models/Log.js` : schéma des logs/journalisation
 - `server.js` : serveur Express principal 
 
-# Trigger redeploy on Render 
+# Redeploy trigger - clean after router removal 
