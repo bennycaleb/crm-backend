@@ -77,7 +77,7 @@ app.get('/api/health', (req, res) => {
 // Routes
 app.use('/api', registrationRoutes);
 app.use('/api', shopifyRoutes);
-app.use('/api', ordersRoutes);
+app.use('/api/orders', ordersRoutes);
 app.use('/api', glnetRoutes);
 // app.use('/api/vonage', vonageRoutes);
 

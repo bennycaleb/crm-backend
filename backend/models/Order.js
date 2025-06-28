@@ -35,6 +35,36 @@ const orderSchema = new mongoose.Schema({
     enum: ['pending', 'validated', 'refused', 'no_answer', 'sent_to_glnet', 'delivered'],
     default: 'pending'
   },
+  // Champs supplémentaires pour compatibilité avec le frontend
+  address: {
+    type: String,
+    default: ''
+  },
+  deliveryDate: {
+    type: String,
+    default: ''
+  },
+  operator: {
+    type: String,
+    default: ''
+  },
+  channel: {
+    type: String,
+    default: ''
+  },
+  history: [{
+    date: String,
+    action: String,
+    utilisateur: String
+  }],
+  logistics: {
+    type: Boolean,
+    default: false
+  },
+  orderId: {
+    type: String,
+    default: ''
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -44,5 +74,8 @@ const orderSchema = new mongoose.Schema({
     default: null
   }
 });
+
+// Supprimer les index existants qui causent des problèmes
+orderSchema.index({ orderId: 1 }, { unique: false });
 
 module.exports = mongoose.model('Order', orderSchema); 

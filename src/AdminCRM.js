@@ -101,7 +101,7 @@ function AdminCRM() {
       setLoadingOrders(true);
       setApiError(null);
       try {
-        const res = await fetch(`${API_URL}/api/shopify/orders`);
+        const res = await fetch(`${API_URL}/api/orders`);
         if (!res.ok) throw new Error('API non disponible');
         const data = await res.json();
         setOrders(data);

@@ -6,7 +6,34 @@ const Order = require('../models/Order');
 router.get('/', async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
-    res.json(orders);
+    // Mapping pour compatibilité frontend
+    const mappedOrders = orders.map(order => {
+      // Découper le nom complet si possible
+      let nom = '', prenom = '';
+      if (order.clientName) {
+        const parts = order.clientName.split(' ');
+        nom = parts[0] || '';
+        prenom = parts.slice(1).join(' ') || '';
+      }
+      return {
+        id: order._id,
+        nom,
+        prenom,
+        phone: order.clientPhone,
+        adresse: order.address || '',
+        produit: order.products && order.products[0] ? order.products[0].name : '',
+        quantite: order.products && order.products[0] ? order.products[0].quantity : 1,
+        prix: order.products && order.products[0] ? order.products[0].price : order.totalAmount,
+        statut: order.status,
+        date: order.deliveryDate || (order.createdAt ? order.createdAt.toISOString().split('T')[0] : ''),
+        logistique: order.logistics || false,
+        historique: order.history || [],
+        payment_status: 'paid',
+        // Champs backend natifs pour compatibilité admin
+        ...order.toObject()
+      };
+    });
+    res.json(mappedOrders);
   } catch (error) {
     console.error('Erreur lors de la récupération des commandes:', error);
     res.status(500).json({ error: 'Erreur serveur', details: error.message });
@@ -16,17 +43,59 @@ router.get('/', async (req, res) => {
 // POST /api/orders - Créer une nouvelle commande
 router.post('/', async (req, res) => {
   try {
-    const { clientName, clientPhone, products, totalAmount, status = 'pending' } = req.body;
+    console.log('Données reçues:', req.body);
     
-    const order = new Order({
-      clientName,
-      clientPhone,
-      products,
-      totalAmount,
-      status
-    });
+    // Accepter les deux formats (nouveau et ancien)
+    const {
+      // Format nouveau
+      clientName, clientPhone, products, totalAmount,
+      // Format ancien (frontend actuel)
+      nom, prenom, phone, adresse, produit, quantite, prix, statut, date,
+      // Autres champs
+      id, operateur, canal, historique, logistique
+    } = req.body;
+    
+    // Construire l'objet commande selon le format reçu
+    let orderData = {};
+    
+    if (clientName && clientPhone) {
+      // Format nouveau
+      orderData = {
+        clientName,
+        clientPhone,
+        products: products || [],
+        totalAmount: totalAmount || 0,
+        status: statut || 'pending'
+      };
+    } else if (nom && phone) {
+      // Format ancien (frontend actuel)
+      orderData = {
+        clientName: `${nom} ${prenom || ''}`.trim(),
+        clientPhone: phone,
+        products: [{
+          name: produit || '',
+          quantity: parseInt(quantite) || 1,
+          price: parseFloat(prix) || 0
+        }],
+        totalAmount: parseFloat(prix) || 0,
+        status: statut || 'pending',
+        // Garder les champs supplémentaires
+        address: adresse,
+        deliveryDate: date,
+        operator: operateur,
+        channel: canal,
+        history: historique || [],
+        logistics: logistique || false
+        // Ne pas inclure orderId pour éviter l'erreur de clé dupliquée
+      };
+    } else {
+      return res.status(400).json({ error: 'Données manquantes: nom/prénom et téléphone requis' });
+    }
 
+    const order = new Order(orderData);
     const savedOrder = await order.save();
+    
+    console.log('Commande sauvegardée:', savedOrder);
     res.status(201).json(savedOrder);
   } catch (error) {
     console.error('Erreur lors de la création de la commande:', error);
