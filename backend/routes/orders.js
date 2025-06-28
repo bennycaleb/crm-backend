@@ -2,92 +2,104 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
 
-// Route pour récupérer toutes les commandes
-router.get('/orders', async (req, res) => {
+// GET /api/orders - Récupérer toutes les commandes
+router.get('/', async (req, res) => {
   try {
-    console.log('Récupération des commandes...');
-    const orders = await Order.find().sort({ dateCreation: -1 });
-    console.log(`${orders.length} commandes trouvées`);
+    const orders = await Order.find().sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
     console.error('Erreur lors de la récupération des commandes:', error);
-    res.status(500).json({ 
-      error: 'Erreur serveur',
-      details: error.message
-    });
+    res.status(500).json({ error: 'Erreur serveur', details: error.message });
   }
 });
 
-// Route pour créer une nouvelle commande
-router.post('/orders', async (req, res) => {
+// POST /api/orders - Créer une nouvelle commande
+router.post('/', async (req, res) => {
   try {
-    console.log('Création d\'une nouvelle commande:', req.body);
+    const { clientName, clientPhone, products, totalAmount, status = 'pending' } = req.body;
     
-    // Vérifier si l'ID existe déjà
-    const existingOrder = await Order.findOne({ id: req.body.id });
-    if (existingOrder) {
-      return res.status(400).json({ error: 'Une commande avec cet ID existe déjà' });
-    }
+    const order = new Order({
+      clientName,
+      clientPhone,
+      products,
+      totalAmount,
+      status
+    });
 
-    const order = new Order(req.body);
     const savedOrder = await order.save();
-    
-    console.log('Commande créée avec succès:', savedOrder.id);
     res.status(201).json(savedOrder);
   } catch (error) {
     console.error('Erreur lors de la création de la commande:', error);
-    res.status(500).json({ 
-      error: 'Erreur serveur',
-      details: error.message
-    });
+    res.status(500).json({ error: 'Erreur serveur', details: error.message });
   }
 });
 
-// Route pour mettre à jour une commande
-router.put('/orders/:id', async (req, res) => {
+// PUT /api/orders/:id - Mettre à jour le statut d'une commande
+router.put('/:id', async (req, res) => {
   try {
-    console.log('Mise à jour de la commande:', req.params.id);
-    
-    const order = await Order.findOneAndUpdate(
-      { id: req.params.id },
-      req.body,
-      { new: true, runValidators: true }
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const order = await Order.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
     );
-    
+
     if (!order) {
       return res.status(404).json({ error: 'Commande non trouvée' });
     }
-    
-    console.log('Commande mise à jour avec succès');
+
     res.json(order);
   } catch (error) {
     console.error('Erreur lors de la mise à jour de la commande:', error);
-    res.status(500).json({ 
-      error: 'Erreur serveur',
-      details: error.message
-    });
+    res.status(500).json({ error: 'Erreur serveur', details: error.message });
   }
 });
 
-// Route pour supprimer une commande
-router.delete('/orders/:id', async (req, res) => {
+// POST /api/orders/:id/send-to-glnet - Envoyer une commande à gl-net
+router.post('/:id/send-to-glnet', async (req, res) => {
   try {
-    console.log('Suppression de la commande:', req.params.id);
+    const { id } = req.params;
     
-    const order = await Order.findOneAndDelete({ id: req.params.id });
-    
+    // Récupérer la commande
+    const order = await Order.findById(id);
     if (!order) {
       return res.status(404).json({ error: 'Commande non trouvée' });
     }
-    
-    console.log('Commande supprimée avec succès');
-    res.json({ message: 'Commande supprimée avec succès' });
-  } catch (error) {
-    console.error('Erreur lors de la suppression de la commande:', error);
-    res.status(500).json({ 
-      error: 'Erreur serveur',
-      details: error.message
+
+    // Simuler l'envoi à gl-net (ici vous pouvez intégrer l'API gl-net réelle)
+    console.log('Envoi de la commande à gl-net:', {
+      orderId: order._id,
+      clientName: order.clientName,
+      clientPhone: order.clientPhone,
+      products: order.products,
+      totalAmount: order.totalAmount
     });
+
+    // Mettre à jour le statut de la commande
+    order.status = 'sent_to_glnet';
+    order.sentToGlNetAt = new Date();
+    await order.save();
+
+    res.json({ 
+      message: 'Commande envoyée à gl-net avec succès',
+      order 
+    });
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi à gl-net:', error);
+    res.status(500).json({ error: 'Erreur serveur', details: error.message });
+  }
+});
+
+// GET /api/orders/validated - Récupérer seulement les commandes validées
+router.get('/validated', async (req, res) => {
+  try {
+    const orders = await Order.find({ status: 'validated' }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des commandes validées:', error);
+    res.status(500).json({ error: 'Erreur serveur', details: error.message });
   }
 });
 
