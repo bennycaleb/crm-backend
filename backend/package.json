@@ -1,6 +1,7 @@
 {
-  "name": "backend",
+  "name": "crm-backend",
   "version": "1.0.0",
+  "description": "Backend for CRM system",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -9,9 +10,21 @@
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.2",
-    "mongoose": "^8.15.1",
-    "multer": "^2.0.1"
-  }
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mongoose": "^7.5.0",
+    "multer": "^1.4.5-lts.1",
+    "socket.io": "^4.7.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "crm",
+    "nodejs",
+    "express",
+    "mongodb"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
 }

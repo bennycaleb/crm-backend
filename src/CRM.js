@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_URL } from './apiConfig';
 import './CRM.css';
 
 const statusList = [
@@ -20,7 +21,7 @@ const tabs = [
   'Principal',
   'Demandes',
   'Contacts supplémentaires',
-  'Panier'
+  'Commandes'
 ];
 
 function getRandomDeliveryDate() {
@@ -101,7 +102,7 @@ function CRM() {
       setLoadingOrders(true);
       setApiError(null);
       try {
-        const res = await fetch('/api/orders');
+        const res = await fetch(`${API_URL}/api/orders`);
         if (!res.ok) throw new Error('API non disponible');
         const data = await res.json();
         setOrders(data);
@@ -258,7 +259,11 @@ function CRM() {
       produit: cart[0]?.produit || '',
       quantite: parseInt(cart[0]?.quantite) || 1,
       prix: parseFloat(cart[0]?.prix) || 0,
-      statut: callStatus === 'Validation' ? 'Validée' : 'En attente',
+      statut: callStatus === 'Validation' ? 'Validée' : 
+              callStatus === 'Refus' ? 'Refus' :
+              callStatus === 'Appel sans réponse' ? 'Appel sans réponse' :
+              callStatus === 'Rappel' ? 'Rappel' :
+              callStatus === 'Poubelle' ? 'Poubelle' : 'En attente',
       logistique: false,
       operateur: 'Opérateur', // Ajout de l'opérateur
       canal: 'Téléphone', // Ajout du canal
@@ -272,7 +277,7 @@ function CRM() {
     };
 
     try {
-      const response = await fetch('/api/orders', {
+      const response = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderToSend)
@@ -359,7 +364,7 @@ function CRM() {
         <span className="crm-brand-main">C-<span className="crm-brand-accent">INNOVATECH</span> Solutions</span>
       </div>
       <div className="crm-legacy-content">
-        {activeTab === 'Panier' ? (
+        {activeTab === 'Commandes' ? (
           <div style={{maxWidth: 950, margin: '0 auto', textAlign:'left', background:'#fff', borderRadius:16, boxShadow:'0 2px 12px rgba(0,0,0,0.07)', padding:'32px 28px 24px 28px', border:'1.5px solid #e0e0e0'}}>
             <h2 style={{fontWeight:800, fontSize:'1.6rem', marginBottom:32, textAlign:'center', letterSpacing:1}}>Mes commandes</h2>
             {apiError && (
@@ -373,17 +378,22 @@ function CRM() {
                   <tr style={{background:'#f7f8fa'}}>
                     <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>ID</th>
                     <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Client</th>
+                    <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Téléphone</th>
                     <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Produit</th>
+                    <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Prix</th>
                     <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Date</th>
                     <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Statut</th>
+                    <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Canal</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orders.map(order => (
                     <tr key={order.id} style={{borderBottom:'1px solid #f0f0f0'}}>
-                      <td style={{padding:'12px 8px'}}>{order.id}</td>
+                      <td style={{padding:'12px 8px', fontWeight:600}}>{order.id}</td>
                       <td style={{padding:'12px 8px'}}>{order.nom} {order.prenom}</td>
+                      <td style={{padding:'12px 8px'}}>{order.phone}</td>
                       <td style={{padding:'12px 8px'}}>{order.produit}</td>
+                      <td style={{padding:'12px 8px', fontWeight:600}}>{order.prix}€</td>
                       <td style={{padding:'12px 8px'}}>{new Date(order.date).toLocaleDateString('fr-FR')}</td>
                       <td style={{padding:'12px 8px'}}>
                         <span style={{
@@ -396,15 +406,35 @@ function CRM() {
                             order.statut === 'Validée' ? '#e8f5e9' :
                             order.statut === 'Expédiée' ? '#e3f2fd' :
                             order.statut === 'Livrée' ? '#f3e5f5' :
+                            order.statut === 'Refus' ? '#ffebee' :
+                            order.statut === 'Appel sans réponse' ? '#fff8e1' :
+                            order.statut === 'Rappel' ? '#e1f5fe' :
+                            order.statut === 'Poubelle' ? '#fafafa' :
                             '#ffebee',
                           color: 
                             order.statut === 'En attente' ? '#e65100' :
                             order.statut === 'Validée' ? '#2e7d32' :
                             order.statut === 'Expédiée' ? '#1565c0' :
                             order.statut === 'Livrée' ? '#6a1b9a' :
+                            order.statut === 'Refus' ? '#c62828' :
+                            order.statut === 'Appel sans réponse' ? '#f57f17' :
+                            order.statut === 'Rappel' ? '#0277bd' :
+                            order.statut === 'Poubelle' ? '#757575' :
                             '#c62828'
                         }}>
                           {order.statut}
+                        </span>
+                      </td>
+                      <td style={{padding:'12px 8px'}}>
+                        <span style={{
+                          padding: '3px 6px',
+                          borderRadius: 8,
+                          fontSize: '0.8rem',
+                          fontWeight: 500,
+                          background: '#e8f5e9',
+                          color: '#2e7d32'
+                        }}>
+                          {order.canal || 'Téléphone'}
                         </span>
                       </td>
                     </tr>

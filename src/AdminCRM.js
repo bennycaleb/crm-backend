@@ -9,6 +9,7 @@ import { DatePicker } from 'antd';
 import 'antd/dist/reset.css';
 import moment from 'moment';
 import AdminShopifyOrders from './AdminShopifyOrders';
+import { API_URL } from './apiConfig';
 
 const tabs = [
   { label: 'Statistiques' },
@@ -100,7 +101,7 @@ function AdminCRM() {
       setLoadingOrders(true);
       setApiError(null);
       try {
-        const res = await fetch('http://localhost:5001/api/shopify/orders');
+        const res = await fetch(`${API_URL}/api/shopify/orders`);
         if (!res.ok) throw new Error('API non disponible');
         const data = await res.json();
         setOrders(data);
@@ -122,7 +123,7 @@ function AdminCRM() {
       if (activeTab === 'Demandes d\'inscription') {
         setLoadingRequests(true);
         try {
-          const res = await fetch('http://localhost:5001/api/requests');
+          const res = await fetch(`${API_URL}/api/requests`);
           if (!res.ok) throw new Error('API non disponible');
           const data = await res.json();
           setRegistrationRequests(data);
@@ -155,7 +156,7 @@ function AdminCRM() {
     if (editIndex !== null) {
       // Modification
       const orderToUpdate = { ...orders[editIndex], ...newOrder };
-      await fetch(`/api/orders/${orderToUpdate.id}`, {
+      await fetch(`${API_URL}/api/orders/${orderToUpdate.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderToUpdate)
@@ -177,9 +178,10 @@ function AdminCRM() {
             action: 'Création',
             utilisateur: 'Admin'
           }
-        ]
+        ],
+        payment_status: 'paid'
       };
-      const res = await fetch('/api/orders', {
+      const res = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderToCreate)
@@ -203,7 +205,7 @@ function AdminCRM() {
   // Supprimer une commande
   const handleDelete = async (idx) => {
     const id = orders[idx].id;
-    await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+    await fetch(`${API_URL}/api/orders/${id}`, { method: 'DELETE' });
     setOrders(orders.filter((_, i) => i !== idx));
     setSelectedOrder(null);
   };
@@ -220,14 +222,14 @@ function AdminCRM() {
     const order = { ...orders[idx], logistique: true };
     try {
       // Mettre à jour le statut dans la base de données
-      await fetch(`/api/orders/${order.id}`, {
+      await fetch(`${API_URL}/api/orders/${order.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(order)
       });
 
       // Envoyer à gl-net
-      const glnetResponse = await fetch(`/api/shopify/send-to-glnet/${order.id}`, {
+      const glnetResponse = await fetch(`${API_URL}/api/shopify/send-to-glnet/${order.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(order)
@@ -419,7 +421,7 @@ function AdminCRM() {
     if (!password) return;
 
     try {
-      const res = await fetch(`http://localhost:5001/api/approve/${requestId}`, {
+      const res = await fetch(`${API_URL}/api/approve/${requestId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -428,7 +430,7 @@ function AdminCRM() {
       if (!res.ok) throw new Error('Erreur lors de l\'approbation');
       
       // Rafraîchir la liste des demandes
-      const updatedRequests = await fetch('http://localhost:5001/api/requests').then(r => r.json());
+      const updatedRequests = await fetch(`${API_URL}/api/requests`).then(r => r.json());
       setRegistrationRequests(updatedRequests);
       
       alert('Demande approuvée avec succès');
@@ -443,7 +445,7 @@ function AdminCRM() {
     if (!reason) return;
 
     try {
-      const res = await fetch(`http://localhost:5001/api/reject/${requestId}`, {
+      const res = await fetch(`${API_URL}/api/reject/${requestId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason })
@@ -452,7 +454,7 @@ function AdminCRM() {
       if (!res.ok) throw new Error('Erreur lors du refus');
       
       // Rafraîchir la liste des demandes
-      const updatedRequests = await fetch('http://localhost:5001/api/requests').then(r => r.json());
+      const updatedRequests = await fetch(`${API_URL}/api/requests`).then(r => r.json());
       setRegistrationRequests(updatedRequests);
       
       alert('Demande refusée avec succès');

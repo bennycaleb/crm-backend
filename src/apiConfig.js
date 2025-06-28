@@ -1,0 +1,1 @@
+export const API_URL = 'https://crm-backend-nwl9.onrender.com'; 

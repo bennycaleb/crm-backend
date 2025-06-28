@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from './apiConfig';
 import './Register.css';
 
 function Register() {
@@ -56,7 +57,7 @@ function Register() {
       });
       formDataToSend.append('passeportFile', passeportFile);
 
-      const response = await fetch('http://localhost:5001/api/register', {
+      const response = await fetch(`${API_URL}/api/register`, {
         method: 'POST',
         body: formDataToSend
       });

@@ -6,11 +6,21 @@ const path = require('path');
 const fs = require('fs');
 const registrationRoutes = require('./routes/registration');
 const shopifyRoutes = require('./routes/shopify');
+const ordersRoutes = require('./routes/orders');
 const multer = require('multer');
 const glnetRoutes = require('./routes/glnet');
+const http = require('http');
+const socketIo = require('socket.io');
 // import { getFakeShopifyData } from "./api-shopify.js";
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 
 // Configuration CORS
 app.use(cors({
@@ -55,7 +65,7 @@ const upload = multer({
 });
 
 // Connexion à MongoDB
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/crm')
 .then(() => console.log('Connecté à MongoDB'))
 .catch(err => console.error('Erreur de connexion à MongoDB:', err));
 
@@ -67,7 +77,37 @@ app.get('/api/health', (req, res) => {
 // Routes
 app.use('/api', registrationRoutes);
 app.use('/api', shopifyRoutes);
+app.use('/api', ordersRoutes);
 app.use('/api', glnetRoutes);
+// app.use('/api/vonage', vonageRoutes);
+
+// Socket.IO pour les communications en temps réel
+io.on('connection', (socket) => {
+  console.log('Client connecté:', socket.id);
+
+  // Gestion des statuts d'opérateur
+  socket.on('operator-status', (data) => {
+    console.log('Statut opérateur:', data);
+    // Diffuser le statut à tous les clients admin
+    socket.broadcast.emit('operator-status-update', data);
+  });
+
+  // Gestion des appels
+  socket.on('call-event', (data) => {
+    console.log('Événement appel:', data);
+    socket.broadcast.emit('call-update', data);
+  });
+
+  // Gestion des nouvelles commandes
+  socket.on('new-order', (data) => {
+    console.log('Nouvelle commande:', data);
+    socket.broadcast.emit('order-created', data);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client déconnecté:', socket.id);
+  });
+});
 
 // Servir les fichiers statiques du frontend en production
 if (process.env.NODE_ENV === 'production') {
@@ -100,7 +140,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
   console.log(`Serveur démarré sur le port ${PORT}`);
 }); 
