@@ -1,8 +1,3 @@
-lbc@MacBook-Air-de-Lewere CRM-J-main %    git remote remove origin
-   git remote add origin https://github.com/bennycaleb/crm-backend.git
-fatal: not a git repository (or any of the parent directories): .git
-fatal: not a git repository (or any of the parent directories): .git
-lbc@MacBook-Air-de-Lewere CRM-J-main % 
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
@@ -202,10 +197,11 @@ router.post('/reject/:requestId', async (req, res) => {
       });
     }
 
+    // Mettre à jour le statut de la demande
     request.status = 'refuse';
     request.dateTraitement = new Date();
-    request.traitePar = req.user._id;
     request.raisonRefus = reason;
+    request.traitePar = null; // Pas d'authentification, donc pas d'admin associé
     await request.save();
 
     res.json({
@@ -214,7 +210,8 @@ router.post('/reject/:requestId', async (req, res) => {
   } catch (error) {
     console.error('Erreur lors du refus de la demande:', error);
     res.status(500).json({
-      message: 'Une erreur est survenue lors du refus de la demande'
+      message: 'Une erreur est survenue lors du refus de la demande',
+      error: error.message
     });
   }
 });
