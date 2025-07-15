@@ -18,8 +18,7 @@ const callStatusList = [
 
 const tabs = [
   'Principal',
-  'Demandes',
-  'Contacts supplémentaires',
+  'Rappel',
   'Panier'
 ];
 

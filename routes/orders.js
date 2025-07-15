@@ -43,14 +43,14 @@ router.get('/', async (req, res) => {
 // POST /api/orders - Créer une nouvelle commande
 router.post('/', async (req, res) => {
   try {
-    console.log('Données reçues (détail):', JSON.stringify(req.body, null, 2));
+    console.log('Données reçues:', req.body);
     
     // Accepter les deux formats (nouveau et ancien)
     const {
       // Format nouveau
       clientName, clientPhone, products, totalAmount,
       // Format ancien (frontend actuel)
-      nom, prenom, phone, adresse, produit, quantite, prix, statut, date,
+      nom, prenom, phone, email, adresse, produit, quantite, prix, statut, date,
       // Autres champs
       id, operateur, canal, historique, logistique
     } = req.body;
@@ -72,6 +72,7 @@ router.post('/', async (req, res) => {
       orderData = {
         clientName: `${nom} ${prenom || ''}`.trim(),
         clientPhone: phone,
+        email: email || '',
         products: [{
           name: produit || '',
           quantity: parseInt(quantite) || 1,
@@ -99,6 +100,11 @@ router.post('/', async (req, res) => {
     res.status(201).json(savedOrder);
   } catch (error) {
     console.error('Erreur lors de la création de la commande:', error);
+    if (error.errors) {
+      for (const [field, err] of Object.entries(error.errors)) {
+        console.error(`Champ: ${field}, Erreur: ${err.message}`);
+      }
+    }
     res.status(500).json({ error: 'Erreur serveur', details: error.message });
   }
 });
@@ -172,87 +178,15 @@ router.get('/validated', async (req, res) => {
   }
 });
 
-// POST /api/orders/external - Route pour les développeurs externes
-router.post('/external', async (req, res) => {
+// DELETE /api/orders/:id - Supprimer une commande
+router.delete('/:id', async (req, res) => {
   try {
-    console.log('=== COMMANDE EXTERNE REÇUE ===');
-    console.log('Headers:', req.headers);
-    console.log('Body:', JSON.stringify(req.body, null, 2));
-    
-    const {
-      customer_name,
-      customer_phone,
-      customer_email,
-      customer_address,
-      products,
-      total_amount,
-      order_id,
-      source = 'external'
-    } = req.body;
-
-    // Validation des champs requis
-    if (!customer_name || !customer_phone) {
-      return res.status(400).json({ 
-        error: 'Champs requis manquants',
-        required: ['customer_name', 'customer_phone'],
-        received: { customer_name, customer_phone }
-      });
-    }
-
-    // Formatage des produits
-    let formattedProducts = [];
-    if (Array.isArray(products)) {
-      formattedProducts = products.map(product => ({
-        name: product.name || product.title || 'Produit',
-        quantity: parseInt(product.quantity) || 1,
-        price: parseFloat(product.price) || 0
-      }));
-    } else if (products) {
-      // Format simple avec un seul produit
-      formattedProducts = [{
-        name: products.name || products.title || 'Produit',
-        quantity: parseInt(products.quantity) || 1,
-        price: parseFloat(products.price) || 0
-      }];
-    }
-
-    // Créer la commande
-    const orderData = {
-      clientName: customer_name,
-      clientPhone: customer_phone,
-      products: formattedProducts,
-      totalAmount: parseFloat(total_amount) || 0,
-      status: 'pending',
-      address: customer_address || '',
-      deliveryDate: new Date().toISOString().split('T')[0],
-      operator: '',
-      channel: source,
-      history: [{
-        date: new Date().toISOString().split('T')[0],
-        action: `Importée depuis ${source}`,
-        utilisateur: 'API Externe'
-      }],
-      logistics: false,
-      orderId: order_id || `EXT-${Date.now()}`
-    };
-
-    const order = new Order(orderData);
-    const savedOrder = await order.save();
-    
-    console.log('Commande externe sauvegardée:', savedOrder);
-    
-    res.status(201).json({
-      success: true,
-      message: 'Commande reçue et enregistrée avec succès',
-      order_id: savedOrder._id,
-      status: 'pending'
-    });
+    const { id } = req.params;
+    const deleted = await Order.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ error: 'Commande non trouvée' });
+    res.json({ message: 'Commande supprimée' });
   } catch (error) {
-    console.error('Erreur lors de la création de la commande externe:', error);
-    res.status(500).json({ 
-      error: 'Erreur serveur lors de la création de la commande',
-      details: error.message 
-    });
+    res.status(500).json({ error: 'Erreur serveur', details: error.message });
   }
 });
 

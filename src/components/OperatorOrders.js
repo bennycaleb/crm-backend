@@ -106,6 +106,18 @@ const OperatorOrders = () => {
     return null;
   };
 
+  // Fonction de normalisation pour comparer les noms d'opérateurs
+  function normalize(str) {
+    return (str || '')
+      .toLowerCase()
+      .replace(/\s+/g, '') // retire les espaces
+      .replace(/[.]/g, '') // retire les points
+      .normalize('NFD').replace(/[ -]/g, '') // retire les accents
+  }
+
+  const username = localStorage.getItem('username') || '';
+  const normalizedUsername = normalize(username);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -141,7 +153,9 @@ const OperatorOrders = () => {
       ) : (
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
-            {orders.map((order) => (
+            {orders
+              .filter(order => normalize(order.operator || order.operateur) === normalizedUsername)
+              .map((order) => (
               <li key={order._id} className="px-6 py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">

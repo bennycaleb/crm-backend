@@ -5,25 +5,61 @@ import './Login.css';
 function Login() {
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('operateur');
+  const [role, setRole] = useState('operator');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const VALID_LOGIN = 'operateur';
-  const VALID_PASSWORD = 'call123';
-  const ADMIN_LOGIN = 'admin';
-  const ADMIN_PASSWORD = 'admin123';
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (role === 'operateur' && login.trim() === VALID_LOGIN && password === VALID_PASSWORD) {
-      setError('');
-      navigate('/operateur');
-    } else if (role === 'admin' && login.trim() === ADMIN_LOGIN && password === ADMIN_PASSWORD) {
-      setError('');
-      navigate('/admin');
-    } else {
-      setError('Login ou mot de passe incorrect');
+    setLoading(true);
+    setError('');
+
+    try {
+      // Récupérer tous les utilisateurs
+      const response = await fetch('/api/users');
+      const users = await response.json();
+      
+      // Chercher l'utilisateur
+      const user = users.find(u => u.username === login.trim());
+      
+      if (user && user.role === role) {
+        // Vérifier le mot de passe avec l'API backend
+        const loginResponse = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: login.trim(),
+            password: password,
+            role: role
+          })
+        });
+
+        if (loginResponse.ok) {
+          // Connexion réussie
+          localStorage.setItem('username', user.username);
+          localStorage.setItem('userRole', user.role);
+          localStorage.setItem('userId', user._id);
+          
+          if (role === 'operator') {
+            navigate('/operateur-bienvenue');
+          } else if (role === 'admin') {
+            navigate('/admin');
+          }
+        } else {
+          const errorData = await loginResponse.json();
+          setError(errorData.error || 'Login ou mot de passe incorrect');
+        }
+      } else {
+        setError('Login ou mot de passe incorrect');
+      }
+    } catch (error) {
+      console.error('Erreur de connexion:', error);
+      setError('Erreur de connexion au serveur');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,11 +85,13 @@ function Login() {
           <div className="role-row">
             <label>Se connecter en tant que :</label>
             <select value={role} onChange={e => setRole(e.target.value)} className="role-select">
-              <option value="operateur">Opérateur</option>
+              <option value="operator">Opérateur</option>
               <option value="admin">Admin</option>
             </select>
           </div>
-          <button className="send-btn" type="submit">Envoyer</button>
+          <button className="send-btn" type="submit" disabled={loading}>
+            {loading ? 'Connexion...' : 'Envoyer'}
+          </button>
         </form>
         <div className="login-links">
           <Link to="/register" className="link-button">Inscrivez-vous</Link> | <button className="link-button" type="button" onClick={() => alert('Fonctionnalité à venir')}>Mot de passe oublié ?</button>

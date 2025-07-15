@@ -11,6 +11,9 @@ const multer = require('multer');
 const glnetRoutes = require('./routes/glnet');
 const http = require('http');
 const socketIo = require('socket.io');
+const usersRoutes = require('./routes/users');
+const authRoutes = require('./routes/auth');
+const recallsRoutes = require('./routes/recalls');
 // import { getFakeShopifyData } from "./api-shopify.js";
 
 const app = express();
@@ -79,6 +82,9 @@ app.use('/api', registrationRoutes);
 app.use('/api', shopifyRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api', glnetRoutes);
+app.use('/api', usersRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/recalls', recallsRoutes);
 // app.use('/api/vonage', vonageRoutes);
 
 // Socket.IO pour les communications en temps réel
@@ -107,6 +113,22 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('Client déconnecté:', socket.id);
   });
+});
+
+// Fallback pour routes React en mode développement (évite les 404 sur /operateur, /admin, etc.)
+if (process.env.NODE_ENV !== 'production') {
+  const path = require('path');
+  app.get('*', (req, res, next) => {
+    if (!req.url.startsWith('/api')) {
+      res.sendFile(path.join(__dirname, '../public/index.html'));
+    } else {
+      next();
+    }
+  });
+}
+// Route racine pour éviter le 404 après déconnexion (doit être après le fallback React)
+app.get('/', (req, res) => {
+  res.status(200).json({ message: 'Bienvenue sur l’API CRM' });
 });
 
 // Servir les fichiers statiques du frontend en production

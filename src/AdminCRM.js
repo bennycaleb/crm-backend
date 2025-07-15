@@ -10,14 +10,16 @@ import 'antd/dist/reset.css';
 import moment from 'moment';
 import AdminShopifyOrders from './AdminShopifyOrders';
 import { API_URL } from './apiConfig';
+import AdminUsers from './components/AdminUsers';
 
 const tabs = [
   { label: 'Statistiques' },
   { label: 'Commandes' },
-  { label: 'Commandes Shopify' },
+  { label: 'Commandes à traiter' },
   { label: 'Recherché' },
   { label: 'Vendeurs' },
-  { label: 'Demandes d\'inscription' }
+  { label: 'Demandes d\'inscription' },
+  { label: 'Utilisateurs' } // Ajout de l'onglet Utilisateurs
 ];
 
 const initialOrders = [
@@ -507,7 +509,12 @@ function AdminCRM() {
             cursor: 'pointer',
             alignSelf: 'center'
           }}
-          onClick={() => navigate('/')}
+          onClick={() => {
+            localStorage.removeItem('username');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('userId');
+            window.location.href = '/';
+          }}
         >
           Déconnexion
         </button>
@@ -823,48 +830,28 @@ function AdminCRM() {
                     <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Prix</th>
                     <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Statut</th>
                     <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Date</th>
-                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Actions</th>
+                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Opérateur</th>
+                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Actes</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredOrders.map((order, idx) => (
-                    <tr key={order.id || idx} style={{background: order.logistique ? '#e3f2fd' : 'white', transition:'background 0.2s', borderBottom:'1.5px solid #f0f0f0', cursor:'pointer'}} onMouseOver={e=>e.currentTarget.style.background='#f5f5f5'} onMouseOut={e=>e.currentTarget.style.background=order.logistique ? '#e3f2fd' : 'white'}>
-                      <td style={{padding:'10px 8px', fontWeight:600, color:'#222'}}>{order.client?.nom} {order.client?.prenom}</td>
-                      <td style={{padding:'10px 8px'}}>{order.client?.telephone}</td>
-                      <td style={{padding:'10px 8px'}}>{order.client?.adresse}</td>
-                      <td style={{padding:'10px 8px'}}>{order.produits?.map(p => p.nom).join(', ')}</td>
-                      <td style={{padding:'10px 8px', textAlign:'center'}}>{order.produits?.reduce((acc, p) => acc + (p.quantite || 1), 0)}</td>
-                      <td style={{padding:'10px 8px', textAlign:'right'}}>{order.produits?.reduce((acc, p) => acc + (p.prix || 0), 0)} €</td>
-                      <td style={{padding:'10px 8px'}}>
-                        <span style={{
-                          padding: '4px 8px',
-                          borderRadius: 12,
-                          fontSize: '0.9rem',
-                          fontWeight: 600,
-                          background: 
-                            order.statut === 'En attente' ? '#fff3e0' :
-                            order.statut === 'En cours' ? '#e3f2fd' :
-                            order.statut === 'Expédiée' ? '#e8f5e9' :
-                            order.statut === 'Livrée' ? '#f3e5f5' :
-                            '#ffebee',
-                          color: 
-                            order.statut === 'En attente' ? '#e65100' :
-                            order.statut === 'En cours' ? '#1565c0' :
-                            order.statut === 'Expédiée' ? '#2e7d32' :
-                            order.statut === 'Livrée' ? '#6a1b9a' :
-                            '#c62828'
-                        }}>
-                          {order.statut}
-                        </span>
-                      </td>
-                      <td style={{padding:'10px 8px'}}>{new Date(order.date).toLocaleDateString('fr-FR')}</td>
-                      <td style={{padding:'10px 8px'}}>{order.agent || '—'}</td>
+                    <tr key={order._id || order.id || idx} style={{background: order.logistique ? '#e3f2fd' : 'white', transition:'background 0.2s', borderBottom:'1.5px solid #f0f0f0', cursor:'pointer'}} onMouseOver={e=>e.currentTarget.style.background='#f5f5f5'} onMouseOut={e=>e.currentTarget.style.background=order.logistique ? '#e3f2fd' : 'white'}>
+                      <td style={{padding:'10px 8px', fontWeight:600, color:'#222'}}>{order.nom} {order.prenom}</td>
+                      <td style={{padding:'10px 8px'}}>{order.phone}</td>
+                      <td style={{padding:'10px 8px'}}>{order.adresse}</td>
+                      <td style={{padding:'10px 8px'}}>{order.produit}</td>
+                      <td style={{padding:'10px 8px', textAlign:'center'}}>{order.quantite}</td>
+                      <td style={{padding:'10px 8px', textAlign:'center'}}>{order.prix}€</td>
+                      <td style={{padding:'10px 8px'}}>{order.statut}</td>
+                      <td style={{padding:'10px 8px'}}>{order.date}</td>
+                      <td style={{padding:'10px 8px', fontWeight:600, color:'#1976d2'}}>{order.operateur || order.operator || '—'}</td>
                       <td style={{padding:'10px 8px'}}>
                         <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
                           <button style={{background:'#1976d2', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90}} onClick={e=>{e.stopPropagation();handleShowDetails(order);}}>Détails</button>
-                          <button style={{background:'#43a047', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90, opacity:order.logistique?0.7:1}} onClick={e=>{e.stopPropagation();handleSendLogistique(idx);}} disabled={order.logistique}>{order.logistique ? 'Envoyée' : 'Logistique'}</button>
-                          <button style={{background:'#ffb300', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90}} onClick={e=>{e.stopPropagation();handleEdit(idx);}}>Modifier</button>
-                          <button style={{background:'#e53935', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90}} onClick={e=>{e.stopPropagation();handleDelete(idx);}}>Supprimer</button>
+                          <button style={{background:'#43a047', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90, opacity:order.logistique?0.7:1}} onClick={e=>e.stopPropagation()||handleSendLogistique(idx)} disabled={order.logistique}>{order.logistique ? 'Envoyée' : 'Logistique'}</button>
+                          <button style={{background:'#ffb300', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90}} onClick={e=>e.stopPropagation()||handleEdit(idx)}>Modifier</button>
+                          <button style={{background:'#e53935', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90}} onClick={e=>e.stopPropagation()||handleDelete(idx)}>Supprimer</button>
                         </div>
                       </td>
                     </tr>
@@ -891,7 +878,7 @@ function AdminCRM() {
             )}
           </div>
         )}
-        {activeTab === 'Commandes Shopify' && (
+        {activeTab === 'Commandes à traiter' && (
           <AdminShopifyOrders />
         )}
         {activeTab === 'Recherché' && (
@@ -949,42 +936,46 @@ function AdminCRM() {
             </div>
             {/* Résultats */}
             <div style={{overflowX:'auto', marginTop:18}}>
-              <table style={{width:'100%', borderCollapse:'separate', borderSpacing:0, fontSize:'0.99rem', background:'#fff', borderRadius:10}}>
-                <thead>
-                  <tr style={{background:'#f7f8fa'}}>
-                    <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>N° Cmd</th>
-                    <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Client</th>
-                    <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Téléphone</th>
-                    <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Date</th>
-                    <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Produit(s)</th>
-                    <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Montant</th>
-                    <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Statut</th>
-                    <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Agent</th>
-                    <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredOrders.map((order, idx) => (
-                    <tr key={order.id || idx} style={{borderBottom:'1.5px solid #f0f0f0'}}>
-                      <td style={{padding:'10px 8px', fontWeight:600}}>{order.id}</td>
-                      <td style={{padding:'10px 8px'}}>{order.nom} {order.prenom}</td>
-                      <td style={{padding:'10px 8px'}}>{order.phone}</td>
-                      <td style={{padding:'10px 8px'}}>{order.date}</td>
-                      <td style={{padding:'10px 8px'}}>{order.produit} {order.quantite>1?`(x${order.quantite})`:''}</td>
-                      <td style={{padding:'10px 8px', textAlign:'right'}}>{order.prix*order.quantite} €</td>
-                      <td style={{padding:'10px 8px'}}>
-                        <span style={{padding:'4px 8px', borderRadius:12, fontWeight:600, background: order.statut==='Livrée'?'#e8f5e9':order.statut==='Annulée'?'#ffebee':order.statut==='En attente'?'#fff3e0':order.statut==='Litige'?'#ffecb3':'#e3f2fd', color: order.statut==='Livrée'?'#2e7d32':order.statut==='Annulée'?'#c62828':order.statut==='En attente'?'#e65100':order.statut==='Litige'?'#ff9800':'#1565c0'}}>{order.statut}</span>
-                      </td>
-                      <td style={{padding:'10px 8px'}}>{order.operateur||'—'}</td>
-                      <td style={{padding:'10px 8px'}}>
-                        <button style={{background:'#1976d2', color:'#fff', border:'none', borderRadius:7, padding:'6px 12px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', marginRight:4}} onClick={()=>setSelectedOrder(order)}>🔍</button>
-                        <button style={{background:'#ffb300', color:'#fff', border:'none', borderRadius:7, padding:'6px 12px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', marginRight:4}}>✏️</button>
-                        <button style={{background:'#888', color:'#fff', border:'none', borderRadius:7, padding:'6px 12px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer'}}>📄</button>
-                      </td>
+              {Object.values(filters).some(v => v && v !== '') ? (
+                <table style={{width:'100%', borderCollapse:'separate', borderSpacing:0, fontSize:'0.99rem', background:'#fff', borderRadius:10}}>
+                  <thead>
+                    <tr style={{background:'#f7f8fa'}}>
+                      <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>N° Cmd</th>
+                      <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Client</th>
+                      <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Téléphone</th>
+                      <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Date</th>
+                      <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Produit(s)</th>
+                      <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Montant</th>
+                      <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Statut</th>
+                      <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Opérateur</th>
+                      <th style={{padding:'10px 8px', fontWeight:700, color:'#222'}}>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredOrders.map((order, idx) => (
+                      <tr key={order._id || order.id || idx} style={{borderBottom:'1.5px solid #f0f0f0'}}>
+                        <td style={{padding:'10px 8px', fontWeight:600}}>{order.id}</td>
+                        <td style={{padding:'10px 8px'}}>{order.nom} {order.prenom}</td>
+                        <td style={{padding:'10px 8px'}}>{order.phone}</td>
+                        <td style={{padding:'10px 8px'}}>{order.date}</td>
+                        <td style={{padding:'10px 8px'}}>{order.produit} {order.quantite>1?`(x${order.quantite})`:''}</td>
+                        <td style={{padding:'10px 8px', textAlign:'right'}}>{order.prix*order.quantite} €</td>
+                        <td style={{padding:'10px 8px'}}>
+                          <span style={{padding:'4px 8px', borderRadius:12, fontWeight:600, background: order.statut==='Livrée'?'#e8f5e9':order.statut==='Annulée'?'#ffebee':order.statut==='En attente'?'#fff3e0':order.statut==='Litige'?'#ffecb3':'#e3f2fd', color: order.statut==='Livrée'?'#2e7d32':order.statut==='Annulée'?'#c62828':order.statut==='En attente'?'#e65100':order.statut==='Litige'?'#ff9800':'#1565c0'}}>{order.statut}</span>
+                        </td>
+                        <td style={{padding:'10px 8px'}}>{order.operateur || '—'}</td>
+                        <td style={{padding:'10px 8px'}}>
+                          <button style={{background:'#1976d2', color:'#fff', border:'none', borderRadius:7, padding:'6px 12px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', marginRight:4}} onClick={()=>setSelectedOrder(order)}>🔍</button>
+                          <button style={{background:'#ffb300', color:'#fff', border:'none', borderRadius:7, padding:'6px 12px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', marginRight:4}}>✏️</button>
+                          <button style={{background:'#888', color:'#fff', border:'none', borderRadius:7, padding:'6px 12px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer'}}>📄</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div style={{padding:32, textAlign:'center', color:'#888', fontSize:'1.1rem'}}>Veuillez saisir au moins un critère de recherche pour afficher les commandes.</div>
+              )}
             </div>
             {/* Détail d'une commande (fiche) */}
             {selectedOrder && (
@@ -1043,6 +1034,7 @@ function AdminCRM() {
             )}
           </div>
         )}
+        {activeTab === 'Utilisateurs' && <AdminUsers />}
       </div>
     </div>
   );

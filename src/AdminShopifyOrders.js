@@ -6,6 +6,7 @@ function AdminShopifyOrders() {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [sendingId, setSendingId] = useState(null);
+  const [sendingToOperatorId, setSendingToOperatorId] = useState(null);
 
   useEffect(() => {
     fetch('/api/shopify/orders')
@@ -63,28 +64,108 @@ function AdminShopifyOrders() {
     }
   };
 
+  const handleSendToOperator = async (orderId) => {
+    console.log('=== DÉBUT DE L\'ENVOI À L\'OPÉRATEUR ===');
+    console.log('Commande ID:', orderId);
+    setSendingToOperatorId(orderId);
+    setSuccessMsg('');
+    setError('');
+    
+    try {
+      // Récupérer les détails de la commande Shopify
+      const order = orders.find(o => o.shopifyOrderId === orderId);
+      if (!order) {
+        throw new Error('Commande non trouvée');
+      }
+
+      // Convertir la commande Shopify en format standard
+      const shopifyData = order.data;
+      const customer = shopifyData.customer || {};
+      const shippingAddress = shopifyData.shipping_address || {};
+      const lineItems = shopifyData.line_items || [];
+
+      // Créer une nouvelle commande dans le système
+      const newOrder = {
+        clientName: `${customer.first_name || ''} ${customer.last_name || ''}`.trim(),
+        clientPhone: shippingAddress.phone || customer.phone || '0000000000',
+        products: lineItems.map(item => ({
+          name: item.title || 'Produit',
+          quantity: item.quantity || 1,
+          price: parseFloat(item.price) || 0
+        })),
+        totalAmount: parseFloat(shopifyData.total_price) || 0,
+        status: 'pending',
+        address: `${shippingAddress.address1 || ''} ${shippingAddress.address2 || ''} ${shippingAddress.city || ''} ${shippingAddress.zip || ''}`.trim(),
+        deliveryDate: new Date().toISOString().split('T')[0],
+        operator: '', // Sera assigné automatiquement
+        channel: 'shopify',
+        history: [{
+          date: new Date().toISOString().split('T')[0],
+          action: 'Importée depuis Shopify',
+          utilisateur: 'Admin'
+        }],
+        logistics: false,
+        orderId: `SHOPIFY-${orderId}`
+      };
+
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newOrder)
+      });
+
+      if (response.ok) {
+        setSuccessMsg(`Commande ${orderId} envoyée aux opérateurs avec succès !`);
+        console.log('Commande envoyée aux opérateurs:', newOrder);
+        
+        // Optionnel : supprimer la commande Shopify après envoi
+        // await fetch(`/api/shopify/orders/${orderId}`, { method: 'DELETE' });
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de l\'envoi aux opérateurs');
+      }
+    } catch (e) {
+      console.error('Exception lors de l\'envoi aux opérateurs:', e);
+      setError('Erreur lors de l\'envoi aux opérateurs: ' + e.message);
+    } finally {
+      setSendingToOperatorId(null);
+    }
+  };
+
   return (
     <div style={{ padding: 24 }}>
-      <h2>Commandes Shopify reçues</h2>
+      <h2>Commandes à traiter</h2>
+      <p style={{ color: '#666', marginBottom: 16 }}>Commandes reçues depuis les sites web partenaires</p>
       {loading && <p>Chargement...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {successMsg && <p style={{ color: 'green' }}>{successMsg}</p>}
       <ul>
         {orders.map(order => (
           <li key={order.shopifyOrderId} style={{ marginBottom: 16, borderBottom: '1px solid #eee', paddingBottom: 8 }}>
-            <strong>ID Shopify:</strong> {order.shopifyOrderId}<br />
+            <strong>ID Commande:</strong> {order.shopifyOrderId}<br />
             <strong>Date:</strong> {new Date(order.dateReception).toLocaleString()}<br />
             <details>
-              <summary>Détails bruts</summary>
+              <summary>Détails de la commande</summary>
               <pre style={{ background: '#f8f8f8', padding: 8 }}>{JSON.stringify(order.data, null, 2)}</pre>
             </details>
-            <button
-              onClick={() => handleSendToGlnet(order.shopifyOrderId)}
-              disabled={sendingId === order.shopifyOrderId}
-              style={{ marginTop: 8, background: '#1976d2', color: 'white', border: 'none', borderRadius: 4, padding: '8px 16px', cursor: 'pointer' }}
-            >
-              {sendingId === order.shopifyOrderId ? 'Envoi en cours...' : 'Envoyer à gl-net'}
-            </button>
+            <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => handleSendToOperator(order.shopifyOrderId)}
+                disabled={sendingToOperatorId === order.shopifyOrderId}
+                style={{ background: '#43a047', color: 'white', border: 'none', borderRadius: 4, padding: '8px 16px', cursor: 'pointer' }}
+              >
+                {sendingToOperatorId === order.shopifyOrderId ? 'Envoi en cours...' : 'Envoyer'}
+              </button>
+              <button
+                onClick={() => handleSendToGlnet(order.shopifyOrderId)}
+                disabled={sendingId === order.shopifyOrderId}
+                style={{ background: '#1976d2', color: 'white', border: 'none', borderRadius: 4, padding: '8px 16px', cursor: 'pointer' }}
+              >
+                {sendingId === order.shopifyOrderId ? 'Envoi en cours...' : 'Envoyer à gl-net'}
+              </button>
+            </div>
           </li>
         ))}
       </ul>

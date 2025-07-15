@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { API_URL } from './apiConfig';
+import { useNavigate } from 'react-router-dom';
 import './CRM.css';
 
 const statusList = [
@@ -19,8 +20,7 @@ const callStatusList = [
 
 const tabs = [
   'Principal',
-  'Demandes',
-  'Contacts supplémentaires',
+  'Rappel',
   'Commandes'
 ];
 
@@ -49,6 +49,15 @@ function getMaxDeliveryDate() {
     }
   }
   return now.toISOString().split('T')[0];
+}
+
+// Fonction de normalisation pour comparer les noms d'opérateurs
+function normalize(str) {
+  return (str || '')
+    .toLowerCase()
+    .replace(/\s+/g, '') // retire les espaces
+    .replace(/[.]/g, '') // retire les points
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // retire les accents
 }
 
 function CRM() {
@@ -93,8 +102,22 @@ function CRM() {
   const [dateLivraison, setDateLivraison] = useState('');
   // Liste des commandes
   const [orders, setOrders] = useState([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(true); // eslint-disable-line no-unused-vars
   const [apiError, setApiError] = useState(null);
+  // Ajout des états pour nom, prénom et email
+  const [nom, setNom] = useState('');
+  const [prenom, setPrenom] = useState('');
+  const [email, setEmail] = useState('');
+  // Ajout de l'état pour les rappels
+  const [recalls, setRecalls] = useState(() => {
+    const saved = localStorage.getItem('recalls');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Sauvegarde des rappels dans le localStorage à chaque modification
+  useEffect(() => {
+    localStorage.setItem('recalls', JSON.stringify(recalls));
+  }, [recalls]);
 
   // Charger les commandes depuis l'API
   useEffect(() => {
@@ -184,6 +207,26 @@ function CRM() {
     }
   }, [callStatus]);
 
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+    if (callState === 'in-call') {
+      // Début d'appel : signaler au backend
+      fetch(`/api/users/${userId}/current-call`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client: client.name, phone: client.phone })
+      });
+    } else if (callState === 'ended' || callState === 'ringing') {
+      // Fin d'appel : signaler au backend
+      fetch(`/api/users/${userId}/current-call`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client: null, phone: null })
+      });
+    }
+  }, [callState, client.name, client.phone]);
+
   const formatTime = (s) => {
     const m = Math.floor(s / 60).toString().padStart(2, '0');
     const sec = (s % 60).toString().padStart(2, '0');
@@ -208,8 +251,12 @@ function CRM() {
     setCart(newCart);
   };
   // Déconnexion
+  const navigate = useNavigate();
   const handleLogout = () => {
-    window.location.href = '/';
+    localStorage.removeItem('username');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userId');
+    navigate('/'); // Redirection propre vers la page de connexion
   };
   // Enregistrer la commande
   const handleSaveOrder = async (e) => {
@@ -233,6 +280,26 @@ function CRM() {
         setFormError('La date de rappel doit être dans les 3 jours à venir.');
         return;
       }
+      // Ajouter le rappel à la liste
+      setRecalls(prev => [
+        ...prev,
+        {
+          id: Date.now(),
+          name: nom || client.name,
+          phone: client.phone,
+          recallDate,
+        }
+      ]);
+      setOrderSaved(true);
+      setFormError('');
+      setTimeout(() => setOrderSaved(false), 2000);
+      setCallState('ringing');
+      setRecallDate('');
+      setRefusalReason('');
+      setTrashReason('');
+      setDateLivraison('');
+      setCart([{ produit: '', prix: '', quantite: '', frais: '', tva: '' }]);
+      return; // NE PAS envoyer au backend
     }
     if (callStatus === 'Refus' && !refusalReason.trim()) {
       setFormError('Veuillez indiquer la raison du refus.');
@@ -251,21 +318,22 @@ function CRM() {
     // Construction de la commande à envoyer à l'admin
     const orderToSend = {
       id: orderId,
-      nom: client.name.split(' ')[0] || '',
-      prenom: client.name.split(' ').slice(1).join(' ') || '',
+      nom,
+      prenom,
+      email,
       phone: client.phone,
       adresse: Object.values(address).filter(Boolean).join(', '),
       date: dateLivraison || new Date().toISOString().split('T')[0],
       produit: cart[0]?.produit || '',
       quantite: parseInt(cart[0]?.quantite) || 1,
       prix: parseFloat(cart[0]?.prix) || 0,
-      statut: callStatus === 'Validation' ? 'Validée' : 
-              callStatus === 'Refus' ? 'Refus' :
-              callStatus === 'Appel sans réponse' ? 'Appel sans réponse' :
-              callStatus === 'Rappel' ? 'Rappel' :
-              callStatus === 'Poubelle' ? 'Poubelle' : 'En attente',
+      statut: callStatus === 'Validation' ? 'validated' : 
+              callStatus === 'Refus' ? 'refused' :
+              callStatus === 'Appel sans réponse' ? 'no_answer' :
+              callStatus === 'Rappel' ? 'pending' :
+              callStatus === 'Poubelle' ? 'refused' : 'pending',
       logistique: false,
-      operateur: 'Opérateur', // Ajout de l'opérateur
+      operateur: username, // Mettre le vrai username de l'opérateur
       canal: 'Téléphone', // Ajout du canal
       historique: [
         {
@@ -343,6 +411,10 @@ function CRM() {
     setShowSuggestions(false);
   };
 
+  // Récupérer l'opérateur connecté
+  const username = localStorage.getItem('username') || '';
+  const normalizedUsername = normalize(username);
+
   return (
     <div className="crm-legacy-container">
       {/* Onglets + Déconnexion */}
@@ -364,6 +436,28 @@ function CRM() {
         <span className="crm-brand-main">C-<span className="crm-brand-accent">INNOVATECH</span> Solutions</span>
       </div>
       <div className="crm-legacy-content">
+        {activeTab === 'Rappel' && (
+          <div className="recall-block" style={{margin:'48px auto 0 auto',maxWidth:420}}>
+            <h2 style={{fontWeight:700, fontSize:'1.3rem', marginBottom:18}}>Rappels à effectuer</h2>
+            {recalls.length === 0 ? (
+              <div className="recall-msg-ended">Aucun rappel à venir</div>
+            ) : (
+              <ul style={{listStyle:'none',padding:0}}>
+                {recalls.sort((a,b)=>new Date(a.recallDate)-new Date(b.recallDate)).map(r => (
+                  <li key={r.id} style={{marginBottom:18,background:'#fff',borderRadius:8,padding:'12px 18px',boxShadow:'0 2px 8px rgba(255,179,0,0.07)'}}>
+                    <div style={{fontWeight:600,fontSize:'1.08rem',marginBottom:4}}>{r.name} <span style={{color:'#888',fontWeight:400}}>{r.phone}</span></div>
+                    <div style={{fontSize:'0.98rem',color:'#e53935',marginBottom:8}}>À rappeler le {new Date(r.recallDate).toLocaleString('fr-FR')}</div>
+                    <button className="btn-recall" onClick={() => {
+                      setClient({ name: r.name, phone: r.phone });
+                      setActiveTab('Principal');
+                      setCallState('ringing');
+                    }}>Rappeler</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
         {activeTab === 'Commandes' ? (
           <div style={{maxWidth: 950, margin: '0 auto', textAlign:'left', background:'#fff', borderRadius:16, boxShadow:'0 2px 12px rgba(0,0,0,0.07)', padding:'32px 28px 24px 28px', border:'1.5px solid #e0e0e0'}}>
             <h2 style={{fontWeight:800, fontSize:'1.6rem', marginBottom:32, textAlign:'center', letterSpacing:1}}>Mes commandes</h2>
@@ -387,58 +481,60 @@ function CRM() {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map(order => (
-                    <tr key={order.id} style={{borderBottom:'1px solid #f0f0f0'}}>
-                      <td style={{padding:'12px 8px', fontWeight:600}}>{order.id}</td>
-                      <td style={{padding:'12px 8px'}}>{order.nom} {order.prenom}</td>
-                      <td style={{padding:'12px 8px'}}>{order.phone}</td>
-                      <td style={{padding:'12px 8px'}}>{order.produit}</td>
-                      <td style={{padding:'12px 8px', fontWeight:600}}>{order.prix}€</td>
-                      <td style={{padding:'12px 8px'}}>{new Date(order.date).toLocaleDateString('fr-FR')}</td>
-                      <td style={{padding:'12px 8px'}}>
-                        <span style={{
-                          padding: '4px 8px',
-                          borderRadius: 12,
-                          fontSize: '0.9rem',
-                          fontWeight: 600,
-                          background: 
-                            order.statut === 'En attente' ? '#fff3e0' :
-                            order.statut === 'Validée' ? '#e8f5e9' :
-                            order.statut === 'Expédiée' ? '#e3f2fd' :
-                            order.statut === 'Livrée' ? '#f3e5f5' :
-                            order.statut === 'Refus' ? '#ffebee' :
-                            order.statut === 'Appel sans réponse' ? '#fff8e1' :
-                            order.statut === 'Rappel' ? '#e1f5fe' :
-                            order.statut === 'Poubelle' ? '#fafafa' :
-                            '#ffebee',
-                          color: 
-                            order.statut === 'En attente' ? '#e65100' :
-                            order.statut === 'Validée' ? '#2e7d32' :
-                            order.statut === 'Expédiée' ? '#1565c0' :
-                            order.statut === 'Livrée' ? '#6a1b9a' :
-                            order.statut === 'Refus' ? '#c62828' :
-                            order.statut === 'Appel sans réponse' ? '#f57f17' :
-                            order.statut === 'Rappel' ? '#0277bd' :
-                            order.statut === 'Poubelle' ? '#757575' :
-                            '#c62828'
-                        }}>
-                          {order.statut}
-                        </span>
-                      </td>
-                      <td style={{padding:'12px 8px'}}>
-                        <span style={{
-                          padding: '3px 6px',
-                          borderRadius: 8,
-                          fontSize: '0.8rem',
-                          fontWeight: 500,
-                          background: '#e8f5e9',
-                          color: '#2e7d32'
-                        }}>
-                          {order.canal || 'Téléphone'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {orders
+                    .filter(order => normalize(order.operator || order.operateur) === normalizedUsername)
+                    .map(order => (
+                      <tr key={order.id} style={{borderBottom:'1px solid #f0f0f0'}}>
+                        <td style={{padding:'12px 8px', fontWeight:600}}>{order.id}</td>
+                        <td style={{padding:'12px 8px'}}>{order.nom} {order.prenom}</td>
+                        <td style={{padding:'12px 8px'}}>{order.phone}</td>
+                        <td style={{padding:'12px 8px'}}>{order.produit}</td>
+                        <td style={{padding:'12px 8px', fontWeight:600}}>{order.prix}€</td>
+                        <td style={{padding:'12px 8px'}}>{new Date(order.date).toLocaleDateString('fr-FR')}</td>
+                        <td style={{padding:'12px 8px'}}>
+                          <span style={{
+                            padding: '4px 8px',
+                            borderRadius: 12,
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            background: 
+                              order.statut === 'En attente' ? '#fff3e0' :
+                              order.statut === 'Validée' ? '#e8f5e9' :
+                              order.statut === 'Expédiée' ? '#e3f2fd' :
+                              order.statut === 'Livrée' ? '#f3e5f5' :
+                              order.statut === 'Refus' ? '#ffebee' :
+                              order.statut === 'Appel sans réponse' ? '#fff8e1' :
+                              order.statut === 'Rappel' ? '#e1f5fe' :
+                              order.statut === 'Poubelle' ? '#fafafa' :
+                              '#ffebee',
+                            color: 
+                              order.statut === 'En attente' ? '#e65100' :
+                              order.statut === 'Validée' ? '#2e7d32' :
+                              order.statut === 'Expédiée' ? '#1565c0' :
+                              order.statut === 'Livrée' ? '#6a1b9a' :
+                              order.statut === 'Refus' ? '#c62828' :
+                              order.statut === 'Appel sans réponse' ? '#f57f17' :
+                              order.statut === 'Rappel' ? '#0277bd' :
+                              order.statut === 'Poubelle' ? '#757575' :
+                              '#c62828'
+                          }}>
+                            {order.statut}
+                          </span>
+                        </td>
+                        <td style={{padding:'12px 8px'}}>
+                          <span style={{
+                            padding: '3px 6px',
+                            borderRadius: 8,
+                            fontSize: '0.8rem',
+                            fontWeight: 500,
+                            background: '#e8f5e9',
+                            color: '#2e7d32'
+                          }}>
+                            {order.canal || 'Téléphone'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -485,7 +581,7 @@ function CRM() {
                       <button
                         key={s.label}
                         type="button"
-                        className={`btn-control ${s.label.normalize('NFD').replace(/[ -\u036f]/g, '').toLowerCase().replace(/ /g, '')}${isCurrent ? ' selected' : ''}`}
+                        className={`btn-control ${s.label.normalize('NFD').replace(/[ -\u036f]/g, '').toLowerCase().replace(/ /g, '')}${isCurrent ? ' selected' : ''}`}
                         onClick={() => setStatus(s.label)}
                       >
                         {s.label}
@@ -500,18 +596,25 @@ function CRM() {
             </div>
             {/* Colonne de droite : Formulaire */}
             <form className="crm-form" onSubmit={handleSaveOrder}>
-              <div className="crm-section-flex">
-                <div className="crm-section-block">
-                  <div className="crm-section-title">Informations client</div>
-                  <div className="crm-grid-2">
-                    <div className="crm-field">
-                      <label>Nom et prénom</label>
-                      <input type="text" value={client.name} onChange={e => setClient({ ...client, name: e.target.value })} />
-                    </div>
-                    <div className="crm-field">
-                      <label>Numéro de téléphone</label>
-                      <input type="text" value={client.phone} onChange={e => setClient({ ...client, phone: e.target.value })} />
-                    </div>
+              {/* Informations client */}
+              <div className="crm-section" style={{marginBottom:24}}>
+                <div className="crm-section-title">Informations client</div>
+                <div style={{display:'flex', flexDirection:'column', gap:12}}>
+                  <div>
+                    <label>Nom</label>
+                    <input type="text" value={nom} onChange={e => setNom(e.target.value)} required style={{width:'100%'}} />
+                  </div>
+                  <div>
+                    <label>Prénom</label>
+                    <input type="text" value={prenom} onChange={e => setPrenom(e.target.value)} required style={{width:'100%'}} />
+                  </div>
+                  <div>
+                    <label>Email</label>
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={{width:'100%'}} />
+                  </div>
+                  <div>
+                    <label>Numéro de téléphone</label>
+                    <input type="text" value={client.phone} onChange={e => setClient(c => ({...c, phone: e.target.value}))} required style={{width:'100%'}} />
                   </div>
                 </div>
               </div>
@@ -548,19 +651,19 @@ function CRM() {
                 <div className="crm-grid-4">
                   <div className="crm-field">
                     <label>Rue</label>
-                    <input type="text" value={address.rue} readOnly />
+                    <input type="text" value={address.rue} onChange={e => setAddress({ ...address, rue: e.target.value })} />
                   </div>
                   <div className="crm-field">
                     <label>Numéro</label>
-                    <input type="text" value={address.numero} readOnly />
+                    <input type="text" value={address.numero} onChange={e => setAddress({ ...address, numero: e.target.value })} />
                   </div>
                   <div className="crm-field">
                     <label>Code postal</label>
-                    <input type="text" value={address.codePostal} readOnly />
+                    <input type="text" value={address.codePostal} onChange={e => setAddress({ ...address, codePostal: e.target.value })} />
                   </div>
                   <div className="crm-field">
                     <label>Ville</label>
-                    <input type="text" value={address.ville} readOnly />
+                    <input type="text" value={address.ville} onChange={e => setAddress({ ...address, ville: e.target.value })} />
                   </div>
                 </div>
                 <div className="crm-grid-3">
