@@ -131,12 +131,21 @@ app.get('/', (req, res) => {
   res.status(200).json({ message: 'Bienvenue sur l’API CRM' });
 });
 
-// Servir les fichiers statiques du frontend en production
+// En production, on ne sert que l'API (pas de frontend)
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../build')));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../build', 'index.html'));
+  // Route racine pour l'API
+  app.get('/', (req, res) => {
+    res.status(200).json({ 
+      message: 'API CRM Backend', 
+      version: '1.0.0',
+      endpoints: {
+        health: '/api/health',
+        auth: '/api/auth',
+        users: '/api/users',
+        orders: '/api/orders',
+        registration: '/api/registration'
+      }
+    });
   });
 }
 
