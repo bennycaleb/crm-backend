@@ -142,11 +142,6 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Route racine pour éviter le 404 après déconnexion (doit être après le fallback React)
-app.get('/', (req, res) => {
-  res.status(200).json({ message: 'Bienvenue sur l’API CRM' });
-});
-
 // Middleware pour gérer les erreurs 404
 app.use((req, res, next) => {
   console.log('Route non trouvée:', req.method, req.url);
