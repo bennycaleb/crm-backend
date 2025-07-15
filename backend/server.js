@@ -14,7 +14,6 @@ const socketIo = require('socket.io');
 const usersRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
 const recallsRoutes = require('./routes/recalls');
-// import { getFakeShopifyData } from "./api-shopify.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -85,7 +84,6 @@ app.use('/api', glnetRoutes);
 app.use('/api', usersRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/recalls', recallsRoutes);
-// app.use('/api/vonage', vonageRoutes);
 
 // Socket.IO pour les communications en temps réel
 io.on('connection', (socket) => {
@@ -94,7 +92,6 @@ io.on('connection', (socket) => {
   // Gestion des statuts d'opérateur
   socket.on('operator-status', (data) => {
     console.log('Statut opérateur:', data);
-    // Diffuser le statut à tous les clients admin
     socket.broadcast.emit('operator-status-update', data);
   });
 
@@ -115,32 +112,21 @@ io.on('connection', (socket) => {
   });
 });
 
-// Configuration des routes selon l'environnement
-if (process.env.NODE_ENV === 'production') {
-  // En production, on ne sert que l'API (pas de frontend)
-  app.get('/', (req, res) => {
-    res.status(200).json({ 
-      message: 'API CRM Backend', 
-      version: '1.0.0',
-      endpoints: {
-        health: '/api/health',
-        auth: '/api/auth',
-        users: '/api/users',
-        orders: '/api/orders',
-        registration: '/api/registration'
-      }
-    });
-  });
-} else {
-  // Fallback pour routes React en mode développement (évite les 404 sur /operateur, /admin, etc.)
-  app.get('*', (req, res, next) => {
-    if (!req.url.startsWith('/api')) {
-      res.sendFile(path.join(__dirname, '../public/index.html'));
-    } else {
-      next();
+// Route racine
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    message: 'API CRM Backend', 
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      users: '/api/users',
+      orders: '/api/orders',
+      registration: '/api/registration'
     }
   });
-}
+});
 
 // Middleware pour gérer les erreurs 404
 app.use((req, res, next) => {
@@ -167,4 +153,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`Serveur démarré sur le port ${PORT}`);
+  console.log(`Environnement: ${process.env.NODE_ENV || 'development'}`);
 }); 
