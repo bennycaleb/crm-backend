@@ -115,25 +115,9 @@ io.on('connection', (socket) => {
   });
 });
 
-// Fallback pour routes React en mode développement (évite les 404 sur /operateur, /admin, etc.)
-if (process.env.NODE_ENV !== 'production') {
-  const path = require('path');
-  app.get('*', (req, res, next) => {
-    if (!req.url.startsWith('/api')) {
-      res.sendFile(path.join(__dirname, '../public/index.html'));
-    } else {
-      next();
-    }
-  });
-}
-// Route racine pour éviter le 404 après déconnexion (doit être après le fallback React)
-app.get('/', (req, res) => {
-  res.status(200).json({ message: 'Bienvenue sur l’API CRM' });
-});
-
-// En production, on ne sert que l'API (pas de frontend)
+// Configuration des routes selon l'environnement
 if (process.env.NODE_ENV === 'production') {
-  // Route racine pour l'API
+  // En production, on ne sert que l'API (pas de frontend)
   app.get('/', (req, res) => {
     res.status(200).json({ 
       message: 'API CRM Backend', 
@@ -147,7 +131,21 @@ if (process.env.NODE_ENV === 'production') {
       }
     });
   });
+} else {
+  // Fallback pour routes React en mode développement (évite les 404 sur /operateur, /admin, etc.)
+  app.get('*', (req, res, next) => {
+    if (!req.url.startsWith('/api')) {
+      res.sendFile(path.join(__dirname, '../public/index.html'));
+    } else {
+      next();
+    }
+  });
 }
+
+// Route racine pour éviter le 404 après déconnexion (doit être après le fallback React)
+app.get('/', (req, res) => {
+  res.status(200).json({ message: 'Bienvenue sur l’API CRM' });
+});
 
 // Middleware pour gérer les erreurs 404
 app.use((req, res, next) => {
