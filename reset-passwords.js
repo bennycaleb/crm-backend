@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { MongoClient } = require('mongodb');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 // Configuration des connexions
 const ATLAS_URI = 'mongodb+srv://LBC_m:LBClbc%40242@cluster0.7i4gd18.mongodb.net/crm?retryWrites=true&w=majority';
