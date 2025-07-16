@@ -66,10 +66,54 @@ const upload = multer({
   }
 });
 
-// Connexion à MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/crm')
-.then(() => console.log('Connecté à MongoDB'))
-.catch(err => console.error('Erreur de connexion à MongoDB:', err));
+// Connexion à MongoDB avec options améliorées
+const mongoOptions = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  maxPoolSize: 10,
+  minPoolSize: 1,
+  maxIdleTimeMS: 30000,
+  retryWrites: true,
+  w: 'majority'
+};
+
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/crm', mongoOptions)
+.then(() => {
+  console.log('✅ Connecté à MongoDB avec succès');
+  console.log('📊 Base de données:', mongoose.connection.name);
+  console.log('🌐 Host:', mongoose.connection.host);
+})
+.catch(err => {
+  console.error('❌ Erreur de connexion à MongoDB:', err.message);
+  console.error('🔍 Détails:', {
+    code: err.code,
+    codeName: err.codeName,
+    name: err.name
+  });
+  
+  // En production, on peut choisir de redémarrer ou continuer
+  if (process.env.NODE_ENV === 'production') {
+    console.log('🔄 Tentative de reconnexion dans 5 secondes...');
+    setTimeout(() => {
+      mongoose.connect(process.env.MONGODB_URI, mongoOptions);
+    }, 5000);
+  }
+});
+
+// Gestion des événements de connexion MongoDB
+mongoose.connection.on('error', (err) => {
+  console.error('❌ Erreur MongoDB:', err.message);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('🔌 Déconnecté de MongoDB');
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('🔄 Reconnecté à MongoDB');
+});
 
 // Route de santé pour Render
 app.get('/api/health', (req, res) => {
