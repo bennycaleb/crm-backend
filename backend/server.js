@@ -76,20 +76,15 @@ const mongoOptions = {
   minPoolSize: 1,
   maxIdleTimeMS: 30000,
   retryWrites: true,
-  w: 'majority',
-  // Désactiver SSL/TLS pour résoudre les problèmes de compatibilité
-  ssl: false,
-  tls: false
+  w: 'majority'
 };
 
 // Utiliser l'URI MongoDB Atlas correcte
 let mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/crm';
-// Pour MongoDB Atlas, nettoyer l'URI de tous les paramètres SSL/TLS
-if (mongoUri.includes('mongodb+srv://')) {
-  // Supprimer tous les paramètres existants
-  const baseUri = mongoUri.split('?')[0];
-  // Reconstruire avec seulement les paramètres nécessaires
-  mongoUri = `${baseUri}?retryWrites=true&w=majority`;
+// Pour MongoDB Atlas, utiliser l'URI telle quelle (MongoDB gère SSL automatiquement)
+if (mongoUri.includes('mongodb+srv://') && !mongoUri.includes('retryWrites=true')) {
+  const separator = mongoUri.includes('?') ? '&' : '?';
+  mongoUri += `${separator}retryWrites=true&w=majority`;
 }
 
 mongoose.connect(mongoUri, mongoOptions)
