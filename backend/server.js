@@ -24,12 +24,13 @@ const io = socketIo(server, {
   }
 });
 
-// Configuration CORS - Autoriser tous les domaines pour le moment
+// Configuration CORS - Ultra permissive pour debug
 app.use(cors({
-  origin: true, // Autoriser tous les domaines temporairement
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Accept', 'Authorization']
+  origin: '*',
+  credentials: false,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
+  allowedHeaders: ['*'],
+  exposedHeaders: ['*']
 }));
 
 // Middleware pour logger les requêtes
