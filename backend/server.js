@@ -66,25 +66,25 @@ const upload = multer({
   }
 });
 
-// Connexion à MongoDB avec options améliorées
+// Connexion à MongoDB avec options simplifiées et compatibles
 const mongoOptions = {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000,
+  serverSelectionTimeoutMS: 10000,
   socketTimeoutMS: 45000,
   maxPoolSize: 10,
   minPoolSize: 1,
   maxIdleTimeMS: 30000,
   retryWrites: true,
-  w: 'majority',
-  ssl: true,
-  tls: true
+  w: 'majority'
 };
 
-// Modifier l'URI pour forcer TLS 1.2
+// Utiliser l'URI MongoDB Atlas correcte
 let mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/crm';
-if (mongoUri.includes('mongodb+srv://')) {
-  mongoUri += '&ssl=true&tls=true';
+// Pour MongoDB Atlas, l'URI doit être simple et correcte
+if (mongoUri.includes('mongodb+srv://') && !mongoUri.includes('retryWrites=true')) {
+  const separator = mongoUri.includes('?') ? '&' : '?';
+  mongoUri += `${separator}retryWrites=true&w=majority`;
 }
 
 mongoose.connect(mongoUri, mongoOptions)
