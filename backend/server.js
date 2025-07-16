@@ -78,16 +78,13 @@ const mongoOptions = {
   retryWrites: true,
   w: 'majority',
   ssl: true,
-  sslValidate: false,
-  tls: true,
-  tlsAllowInvalidCertificates: false,
-  tlsAllowInvalidHostnames: false
+  tls: true
 };
 
 // Modifier l'URI pour forcer TLS 1.2
 let mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/crm';
 if (mongoUri.includes('mongodb+srv://')) {
-  mongoUri += '&ssl=true&tls=true&tlsInsecure=false';
+  mongoUri += '&ssl=true&tls=true';
 }
 
 mongoose.connect(mongoUri, mongoOptions)
