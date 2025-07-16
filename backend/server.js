@@ -24,16 +24,9 @@ const io = socketIo(server, {
   }
 });
 
-// Configuration CORS
+// Configuration CORS - Autoriser tous les domaines pour le moment
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        'https://ton-domaine.com', 
-        'https://www.ton-domaine.com',
-        'https://enchanting-klepon-908d0a.netlify.app',
-        'https://*.netlify.app'
-      ] 
-    : true,
+  origin: true, // Autoriser tous les domaines temporairement
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Accept', 'Authorization']
