@@ -76,10 +76,21 @@ const mongoOptions = {
   minPoolSize: 1,
   maxIdleTimeMS: 30000,
   retryWrites: true,
-  w: 'majority'
+  w: 'majority',
+  ssl: true,
+  sslValidate: false,
+  tls: true,
+  tlsAllowInvalidCertificates: false,
+  tlsAllowInvalidHostnames: false
 };
 
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/crm', mongoOptions)
+// Modifier l'URI pour forcer TLS 1.2
+let mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/crm';
+if (mongoUri.includes('mongodb+srv://')) {
+  mongoUri += '&ssl=true&tls=true&tlsInsecure=false';
+}
+
+mongoose.connect(mongoUri, mongoOptions)
 .then(() => {
   console.log('✅ Connecté à MongoDB avec succès');
   console.log('📊 Base de données:', mongoose.connection.name);
