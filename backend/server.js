@@ -66,11 +66,11 @@ const upload = multer({
   }
 });
 
-// Connexion à MongoDB avec options simplifiées et compatibles
+// Connexion à MongoDB avec options minimales pour éviter les conflits TLS
 const mongoOptions = {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 10000,
+  serverSelectionTimeoutMS: 30000,
   socketTimeoutMS: 45000,
   maxPoolSize: 10,
   minPoolSize: 1,
@@ -79,10 +79,11 @@ const mongoOptions = {
   w: 'majority'
 };
 
-// Utiliser l'URI MongoDB Atlas correcte
+// Utiliser l'URI MongoDB Atlas sans paramètres TLS (laissé à MongoDB)
 let mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/crm';
-// Pour MongoDB Atlas, utiliser l'URI telle quelle (MongoDB gère SSL automatiquement)
-if (mongoUri.includes('mongodb+srv://') && !mongoUri.includes('retryWrites=true')) {
+
+// Pour MongoDB Atlas, ajouter seulement les paramètres de base
+if (mongoUri.includes('mongodb+srv://')) {
   const separator = mongoUri.includes('?') ? '&' : '?';
   mongoUri += `${separator}retryWrites=true&w=majority`;
 }
