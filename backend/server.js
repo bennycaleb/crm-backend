@@ -27,7 +27,12 @@ const io = socketIo(server, {
 // Configuration CORS
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://ton-domaine.com', 'https://www.ton-domaine.com'] 
+    ? [
+        'https://ton-domaine.com', 
+        'https://www.ton-domaine.com',
+        'https://enchanting-klepon-908d0a.netlify.app',
+        'https://*.netlify.app'
+      ] 
     : true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
