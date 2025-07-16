@@ -87,8 +87,8 @@ let mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/crm';
 // Pour MongoDB Atlas, l'URI doit être simple et correcte
 if (mongoUri.includes('mongodb+srv://')) {
   const separator = mongoUri.includes('?') ? '&' : '?';
-  // Désactiver SSL dans l'URI
-  mongoUri += `${separator}retryWrites=true&w=majority&ssl=false&tls=false`;
+  // Ajouter seulement les paramètres de base, pas SSL
+  mongoUri += `${separator}retryWrites=true&w=majority`;
 }
 
 mongoose.connect(mongoUri, mongoOptions)
