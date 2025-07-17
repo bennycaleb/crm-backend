@@ -19,18 +19,53 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:3001',
+      'https://enchanting-klepon-908d0a.netlify.app',
+      'https://c-innovatech-solutions.netlify.app',
+      'https://c-innovatech.com',
+      'https://www.c-innovatech.com',
+      'https://*.onrender.com',
+      'https://crm-backend-j.onrender.com'
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
-// Configuration CORS - Ultra permissive pour debug
+// Configuration CORS - Sécurisée et fonctionnelle
 app.use(cors({
-  origin: '*',
-  credentials: false,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
-  allowedHeaders: ['*'],
-  exposedHeaders: ['*']
+  origin: function (origin, callback) {
+    // Autoriser les requêtes sans origin (comme les apps mobiles, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:3001',
+      'https://enchanting-klepon-908d0a.netlify.app',
+      'https://c-innovatech-solutions.netlify.app',
+      'https://c-innovatech.com',
+      'https://www.c-innovatech.com',
+      'https://*.onrender.com',
+      'https://crm-backend-j.onrender.com'
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('🚫 Origin bloqué:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Requested-With']
 }));
 
 // Middleware pour logger les requêtes
