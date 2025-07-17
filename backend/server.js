@@ -29,7 +29,9 @@ const io = socketIo(server, {
       'https://c-innovatech.com',
       'https://www.c-innovatech.com',
       'https://*.onrender.com',
-      'https://crm-backend-j.onrender.com'
+      'https://crm-backend-j.onrender.com',
+      'https://crm-backend-nwl9.onrender.com',
+      'https://beamish-ganache-de6579.netlify.app'
     ],
     methods: ["GET", "POST"],
     credentials: true
@@ -52,7 +54,9 @@ app.use(cors({
       'https://c-innovatech.com',
       'https://www.c-innovatech.com',
       'https://*.onrender.com',
-      'https://crm-backend-j.onrender.com'
+      'https://crm-backend-j.onrender.com',
+      'https://crm-backend-nwl9.onrender.com',
+      'https://beamish-ganache-de6579.netlify.app'
     ];
     
     if (allowedOrigins.indexOf(origin) !== -1) {
