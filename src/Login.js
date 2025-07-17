@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { API_URL } from './apiConfig';
 import './Login.css';
 
 function Login() {
@@ -16,44 +17,35 @@ function Login() {
     setError('');
 
     try {
-      // Récupérer tous les utilisateurs
-      const response = await fetch('/api/users');
-      const users = await response.json();
-      
-      // Chercher l'utilisateur
-      const user = users.find(u => u.username === login.trim());
-      
-      if (user && user.role === role) {
-        // Vérifier le mot de passe avec l'API backend
-        const loginResponse = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            username: login.trim(),
-            password: password,
-            role: role
-          })
-        });
+      // Vérifier le mot de passe avec l'API backend
+      const loginResponse = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: login.trim(),
+          password: password,
+          role: role
+        })
+      });
 
-        if (loginResponse.ok) {
-          // Connexion réussie
-          localStorage.setItem('username', user.username);
-          localStorage.setItem('userRole', user.role);
-          localStorage.setItem('userId', user._id);
-          
-          if (role === 'operator') {
-            navigate('/operateur-bienvenue');
-          } else if (role === 'admin') {
-            navigate('/admin');
-          }
-        } else {
-          const errorData = await loginResponse.json();
-          setError(errorData.error || 'Login ou mot de passe incorrect');
+      if (loginResponse.ok) {
+        const userData = await loginResponse.json();
+        
+        // Connexion réussie
+        localStorage.setItem('username', userData.user.username);
+        localStorage.setItem('userRole', userData.user.role);
+        localStorage.setItem('userId', userData.user.id);
+        
+        if (role === 'operator') {
+          navigate('/operateur-bienvenue');
+        } else if (role === 'admin') {
+          navigate('/admin');
         }
       } else {
-        setError('Login ou mot de passe incorrect');
+        const errorData = await loginResponse.json();
+        setError(errorData.error || 'Login ou mot de passe incorrect');
       }
     } catch (error) {
       console.error('Erreur de connexion:', error);
