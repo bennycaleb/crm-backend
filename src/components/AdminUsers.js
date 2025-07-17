@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_URL } from '../apiConfig';
 
 function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -8,7 +9,7 @@ function AdminUsers() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/users');
+      const res = await fetch(`${API_URL}/api/users`);
       const data = await res.json();
       setUsers(data);
       setError('');
@@ -25,7 +26,7 @@ function AdminUsers() {
   const handleDelete = async (id) => {
     if (!window.confirm('Supprimer cet utilisateur ?')) return;
     try {
-      const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_URL}/api/users/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setUsers(users.filter(user => user._id !== id));
       } else if (res.status === 404) {
@@ -42,7 +43,7 @@ function AdminUsers() {
     const newPassword = prompt('Nouveau mot de passe pour cet utilisateur :');
     if (!newPassword) return;
     try {
-      const res = await fetch(`/api/users/${userId}/reset-password`, {
+      const res = await fetch(`${API_URL}/api/users/${userId}/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ newPassword })
@@ -98,7 +99,7 @@ function AdminUsers() {
             </tr>
           </thead>
           <tbody>
-            {users.map(user => (
+            {users.filter(user => user.username).map(user => (
               <tr key={user._id} style={{ borderBottom: '1px solid #ddd' }}>
                 <td style={{ padding: '12px', border: '1px solid #ddd' }}>
                   <strong>{user.username}</strong>
