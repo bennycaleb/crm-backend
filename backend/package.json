@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "test-mongodb": "node test-mongodb.js",
     "init-db": "node init-db.js",
-    "setup": "npm run test-mongodb && npm run init-db"
+    "setup": "npm run test-mongodb && npm run init-db",
+    "create-admin": "node create-admin-render.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
