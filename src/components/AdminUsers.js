@@ -171,7 +171,7 @@ function AdminUsers() {
                   >
                     Supprimer
                   </button>
-                  {(user.role === 'operator' || user.role === 'admin') && (
+                  {(user.role === 'operator' || user.role === 'operateur' || user.role === 'admin') && (
                     <button
                       onClick={() => handleResetPassword(user._id)}
                       style={{
