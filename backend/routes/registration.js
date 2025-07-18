@@ -147,10 +147,19 @@ router.post('/approve/:requestId', async (req, res) => {
 
     // Créer un nouvel utilisateur
     const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Standardiser le rôle
+    let standardizedRole = 'operator';
+    if (request.role === 'admin') {
+      standardizedRole = 'admin';
+    } else if (request.role === 'operateur') {
+      standardizedRole = 'operator';
+    }
+    
     const newUser = new User({
       username,
       password: hashedPassword,
-      role: request.role,
+      role: standardizedRole,
       nom: request.nom,
       prenom: request.prenom
     });
