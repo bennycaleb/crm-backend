@@ -31,7 +31,8 @@ const io = socketIo(server, {
       'https://*.onrender.com',
       'https://crm-backend-j.onrender.com',
       'https://crm-backend-nwl9.onrender.com',
-      'https://beamish-ganache-de6579.netlify.app'
+      'https://beamish-ganache-de6579.netlify.app',
+      'https://sweetbodyshop.fr'
     ],
     methods: ["GET", "POST"],
     credentials: true
@@ -56,7 +57,8 @@ app.use(cors({
       'https://*.onrender.com',
       'https://crm-backend-j.onrender.com',
       'https://crm-backend-nwl9.onrender.com',
-      'https://beamish-ganache-de6579.netlify.app'
+      'https://beamish-ganache-de6579.netlify.app',
+      'https://sweetbodyshop.fr'
     ];
     
     if (allowedOrigins.indexOf(origin) !== -1) {
