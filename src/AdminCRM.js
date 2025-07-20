@@ -139,10 +139,10 @@ function AdminCRM() {
     fetchRegistrationRequests();
   }, [activeTab]);
 
-  // Filtrage dynamique
+  // Filtrage dynamique (exclut les commandes externes)
   const filteredOrders = orders.filter(order => {
-    // Exclure les commandes externes en attente de la section "Commandes"
-    if (order.statut === 'external_pending') {
+    // Exclure les commandes externes en attente
+    if (order.statut === 'external_pending' || order.status === 'external_pending') {
       return false;
     }
     
@@ -840,8 +840,8 @@ function AdminCRM() {
                     <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Actes</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {filteredOrders.map((order, idx) => (
+                                  <tbody>
+                    {filteredOrders.map((order, idx) => (
                     <tr key={order._id || order.id || idx} style={{background: order.logistique ? '#e3f2fd' : 'white', transition:'background 0.2s', borderBottom:'1.5px solid #f0f0f0', cursor:'pointer'}} onMouseOver={e=>e.currentTarget.style.background='#f5f5f5'} onMouseOut={e=>e.currentTarget.style.background=order.logistique ? '#e3f2fd' : 'white'}>
                       <td style={{padding:'10px 8px', fontWeight:600, color:'#222'}}>{order.nom} {order.prenom}</td>
                       <td style={{padding:'10px 8px'}}>{order.phone}</td>
