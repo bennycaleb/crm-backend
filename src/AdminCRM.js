@@ -141,6 +141,11 @@ function AdminCRM() {
 
   // Filtrage dynamique
   const filteredOrders = orders.filter(order => {
+    // Exclure les commandes externes en attente de la section "Commandes"
+    if (order.statut === 'external_pending') {
+      return false;
+    }
+    
     const matchClient = !filters.client || order.nom.toLowerCase().includes(filters.client.toLowerCase()) || order.prenom.toLowerCase().includes(filters.client.toLowerCase());
     const matchPhone = !filters.phone || order.phone.includes(filters.phone);
     const matchId = !filters.id || order.id.toLowerCase().includes(filters.id.toLowerCase());
