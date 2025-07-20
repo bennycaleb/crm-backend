@@ -180,6 +180,7 @@ router.post('/external', async (req, res) => {
     console.log('Body:', JSON.stringify(req.body, null, 2));
     
     const {
+      // Format standard
       customer_name,
       customer_phone,
       customer_email,
@@ -187,15 +188,29 @@ router.post('/external', async (req, res) => {
       products,
       total_amount,
       order_id,
-      source = 'external'
+      source = 'external',
+      // Format alternatif pour compatibilité (sweetbodyshop.fr)
+      name,
+      phone_number,
+      email,
+      product
     } = req.body;
 
+    // Déterminer les valeurs à utiliser (priorité au format standard)
+    const finalName = customer_name || name;
+    const finalPhone = customer_phone || phone_number;
+    const finalEmail = customer_email || email;
+
     // Validation des champs requis
-    if (!customer_name || !customer_phone) {
+    if (!finalName || !finalPhone) {
       return res.status(400).json({ 
         error: 'Champs requis manquants',
-        required: ['customer_name', 'customer_phone'],
-        received: { customer_name, customer_phone }
+        required: ['customer_name/name', 'customer_phone/phone_number'],
+        received: { 
+          customer_name: finalName, 
+          customer_phone: finalPhone,
+          original_data: req.body
+        }
       });
     }
 
@@ -214,12 +229,19 @@ router.post('/external', async (req, res) => {
         quantity: parseInt(products.quantity) || 1,
         price: parseFloat(products.price) || 0
       }];
+    } else if (product) {
+      // Format simple avec juste le nom du produit
+      formattedProducts = [{
+        name: product,
+        quantity: 1,
+        price: 0
+      }];
     }
 
     // Créer la commande
     const orderData = {
-      clientName: customer_name,
-      clientPhone: customer_phone,
+      clientName: finalName,
+      clientPhone: finalPhone,
       products: formattedProducts,
       totalAmount: parseFloat(total_amount) || 0,
       status: 'pending',
