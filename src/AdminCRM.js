@@ -9,6 +9,7 @@ import { DatePicker } from 'antd';
 import 'antd/dist/reset.css';
 import moment from 'moment';
 import AdminShopifyOrders from './AdminShopifyOrders';
+import AdminExternalOrders from './components/AdminExternalOrders';
 import { API_URL } from './apiConfig';
 import AdminUsers from './components/AdminUsers';
 
@@ -879,7 +880,7 @@ function AdminCRM() {
           </div>
         )}
         {activeTab === 'Commandes à traiter' && (
-          <AdminShopifyOrders />
+          <AdminExternalOrders />
         )}
         {activeTab === 'Recherché' && (
           <div style={{maxWidth: 1100, margin: '0 auto', textAlign:'left', background:'#fff', borderRadius:16, boxShadow:'0 2px 12px rgba(0,0,0,0.07)', padding:'32px 28px 24px 28px', border:'1.5px solid #e0e0e0'}}>

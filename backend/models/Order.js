@@ -32,7 +32,7 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'validated', 'refused', 'no_answer', 'sent_to_glnet', 'delivered'],
+    enum: ['pending', 'external_pending', 'validated', 'refused', 'no_answer', 'sent_to_glnet', 'delivered'],
     default: 'pending'
   },
   // Champs supplémentaires pour compatibilité avec le frontend
