@@ -244,7 +244,7 @@ router.post('/external', async (req, res) => {
       clientPhone: finalPhone,
       products: formattedProducts,
       totalAmount: parseFloat(total_amount) || 0,
-      status: 'external_pending', // Statut spécial pour les commandes externes
+      status: 'external_pending', // Statut spécial pour les commandes externes - v2
       address: customer_address || '',
       deliveryDate: new Date().toISOString().split('T')[0],
       operator: '',
