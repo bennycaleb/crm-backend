@@ -913,86 +913,218 @@ function AdminCRM() {
             </h2>
             <p style={{color:'#666', marginBottom:24}}>Commandes validées par les opérateurs en attente de traitement</p>
             
-            {/* Filtres */}
-            <div style={{display:'flex', flexWrap:'wrap', gap:18, marginBottom:24, alignItems:'end'}}>
-              <div style={{display:'flex', flexDirection:'column', gap:4}}>
-                <label>Rechercher par nom...</label>
-                <input type="text" placeholder="Nom ou prénom..." value={filters.client} onChange={e=>setFilters(f=>({...f, client:e.target.value}))} style={{padding:'8px 12px', borderRadius:6, border:'1.2px solid #cfd8dc', fontSize:'1rem'}} />
-              </div>
-              <div style={{display:'flex', flexDirection:'column', gap:4}}>
-                <label>Tous les statuts</label>
-                <select value={filters.statut} onChange={e=>setFilters(f=>({...f, statut:e.target.value}))} style={{padding:'8px 12px', borderRadius:6, border:'1.2px solid #cfd8dc', fontSize:'1rem'}}>
-                  <option value="">Tous</option>
-                  <option value="En attente">🕒 En attente</option>
-                  <option value="En cours">En cours</option>
-                  <option value="Expédiée">Expédiée</option>
-                  <option value="Livrée">✅ Livrée</option>
-                  <option value="Annulée">❌ Annulée</option>
-                  <option value="Litige">🚨 Litige</option>
-                </select>
-              </div>
-              <div style={{display:'flex', flexDirection:'column', gap:4}}>
-                <label>Date début</label>
-                <input type="date" value={filters.dateStart} onChange={e=>setFilters(f=>({...f, dateStart:e.target.value}))} style={{padding:'8px 12px', borderRadius:6, border:'1.2px solid #cfd8dc', fontSize:'1rem'}} />
-              </div>
-              <div style={{display:'flex', flexDirection:'column', gap:4}}>
-                <label>Date fin</label>
-                <input type="date" value={filters.dateEnd} onChange={e=>setFilters(f=>({...f, dateEnd:e.target.value}))} style={{padding:'8px 12px', borderRadius:6, border:'1.2px solid #cfd8dc', fontSize:'1rem'}} />
-              </div>
-            </div>
-
-            {/* Boutons d'export */}
-            <div style={{display:'flex', gap:12, marginBottom:24}}>
-              <button onClick={exportToExcel} style={{background:'#43a047', color:'#fff', border:'none', borderRadius:8, padding:'12px 24px', fontWeight:700, fontSize:'1rem', cursor:'pointer'}}>
-                📊 Exporter en Excel
-              </button>
-              <button onClick={exportToPDF} style={{background:'#e53935', color:'#fff', border:'none', borderRadius:8, padding:'12px 24px', fontWeight:700, fontSize:'1rem', cursor:'pointer'}}>
-                📄 Exporter en PDF
-              </button>
-            </div>
+            {/* Formulaire de création/modification */}
+            <section style={{marginBottom:36}}>
+              <h3 style={{fontWeight:700, fontSize:'1.13rem', marginBottom:18, color:'#1976d2'}}>Créer ou modifier une commande</h3>
+              <form onSubmit={handleOrderSubmit} style={{background:'#fafbfc', borderRadius:12, padding:24, border:'1.5px solid #e0e0e0'}}>
+                <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:16, marginBottom:20}}>
+                  <div>
+                    <label style={{display:'block', marginBottom:6, fontWeight:600, color:'#333'}}>Nom</label>
+                    <input type="text" value={newOrder.nom} onChange={e=>setNewOrder({...newOrder, nom:e.target.value})} required style={{width:'100%', padding:'10px 12px', borderRadius:6, border:'1.2px solid #cfd8dc', fontSize:'1rem'}} />
+                  </div>
+                  <div>
+                    <label style={{display:'block', marginBottom:6, fontWeight:600, color:'#333'}}>Prénom</label>
+                    <input type="text" value={newOrder.prenom} onChange={e=>setNewOrder({...newOrder, prenom:e.target.value})} required style={{width:'100%', padding:'10px 12px', borderRadius:6, border:'1.2px solid #cfd8dc', fontSize:'1rem'}} />
+                  </div>
+                  <div>
+                    <label style={{display:'block', marginBottom:6, fontWeight:600, color:'#333'}}>Téléphone</label>
+                    <input type="tel" value={newOrder.phone} onChange={e=>setNewOrder({...newOrder, phone:e.target.value})} required style={{width:'100%', padding:'10px 12px', borderRadius:6, border:'1.2px solid #cfd8dc', fontSize:'1rem'}} />
+                  </div>
+                  <div>
+                    <label style={{display:'block', marginBottom:6, fontWeight:600, color:'#333'}}>Adresse de livraison</label>
+                    <input type="text" value={newOrder.adresse} onChange={e=>setNewOrder({...newOrder, adresse:e.target.value})} style={{width:'100%', padding:'10px 12px', borderRadius:6, border:'1.2px solid #cfd8dc', fontSize:'1rem'}} />
+                  </div>
+                  <div>
+                    <label style={{display:'block', marginBottom:6, fontWeight:600, color:'#333'}}>Nom du produit</label>
+                    <input type="text" value={newOrder.produit} onChange={e=>setNewOrder({...newOrder, produit:e.target.value})} required style={{width:'100%', padding:'10px 12px', borderRadius:6, border:'1.2px solid #cfd8dc', fontSize:'1rem'}} />
+                  </div>
+                  <div>
+                    <label style={{display:'block', marginBottom:6, fontWeight:600, color:'#333'}}>Quantité</label>
+                    <input type="number" min="1" value={newOrder.quantite} onChange={e=>setNewOrder({...newOrder, quantite:parseInt(e.target.value)})} required style={{width:'100%', padding:'10px 12px', borderRadius:6, border:'1.2px solid #cfd8dc', fontSize:'1rem'}} />
+                  </div>
+                  <div>
+                    <label style={{display:'block', marginBottom:6, fontWeight:600, color:'#333'}}>Prix</label>
+                    <input type="number" min="0" step="0.01" value={newOrder.prix} onChange={e=>setNewOrder({...newOrder, prix:parseFloat(e.target.value)})} required style={{width:'100%', padding:'10px 12px', borderRadius:6, border:'1.2px solid #cfd8dc', fontSize:'1rem'}} />
+                  </div>
+                  <div>
+                    <label style={{display:'block', marginBottom:6, fontWeight:600, color:'#333'}}>Statut</label>
+                    <select value={newOrder.statut} onChange={e=>setNewOrder({...newOrder, statut:e.target.value})} style={{width:'100%', padding:'10px 12px', borderRadius:6, border:'1.2px solid #cfd8dc', fontSize:'1rem', background:'#fff'}}>
+                      <option value="En attente">En attente</option>
+                      <option value="En cours">En cours</option>
+                      <option value="Expédiée">Expédiée</option>
+                      <option value="Livrée">Livrée</option>
+                      <option value="Annulée">Annulée</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{display:'flex', gap:12, alignItems:'center'}}>
+                  <button type="submit" style={{background:'#43a047', color:'#fff', border:'none', borderRadius:8, padding:'12px 28px', fontWeight:700, fontSize:'1rem', cursor:'pointer', boxShadow:'0 2px 8px rgba(67,160,71,0.10)'}}>
+                    {editIndex !== null ? 'Modifier la commande' : 'Créer la commande'}
+                  </button>
+                  {editIndex !== null && <button type="button" onClick={()=>{setEditIndex(null);setNewOrder({ nom: '', prenom: '', phone: '', adresse: '', produit: '', quantite: 1, prix: 0, statut: 'En attente', date: new Date().toISOString().split('T')[0] });}} style={{background:'#e53935', color:'#fff', border:'none', borderRadius:8, padding:'10px 28px', fontWeight:700, fontSize:'1rem', cursor:'pointer', boxShadow:'0 2px 8px rgba(229,57,53,0.10)'}}>Annuler</button>}
+                </div>
+              </form>
+            </section>
 
             {/* Tableau des commandes */}
-            <div style={{overflowX:'auto'}}>
-              <table style={{width:'100%', borderCollapse:'separate', borderSpacing:0, fontSize:'0.99rem', background:'#fff', borderRadius:10}}>
-                <thead>
-                  <tr style={{background:'#f7f8fa'}}>
-                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Client</th>
-                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Téléphone</th>
-                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Adresse</th>
-                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Produit</th>
-                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Quantité</th>
-                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Prix</th>
-                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Statut</th>
-                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Date</th>
-                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Opérateur</th>
-                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Actes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingOrders.map((order, idx) => (
-                    <tr key={order._id || order.id || idx} style={{background: order.logistique ? '#e3f2fd' : 'white', transition:'background 0.2s', borderBottom:'1.5px solid #f0f0f0', cursor:'pointer'}} onMouseOver={e=>e.currentTarget.style.background='#f5f5f5'} onMouseOut={e=>e.currentTarget.style.background=order.logistique ? '#e3f2fd' : 'white'}>
-                      <td style={{padding:'10px 8px', fontWeight:600, color:'#222'}}>{order.nom} {order.prenom}</td>
-                      <td style={{padding:'10px 8px'}}>{order.phone}</td>
-                      <td style={{padding:'10px 8px'}}>{order.adresse}</td>
-                      <td style={{padding:'10px 8px'}}>{order.produit}</td>
-                      <td style={{padding:'10px 8px', textAlign:'center'}}>{order.quantite}</td>
-                      <td style={{padding:'10px 8px', textAlign:'center'}}>{order.prix}€</td>
-                      <td style={{padding:'10px 8px'}}>{order.statut}</td>
-                      <td style={{padding:'10px 8px'}}>{order.date}</td>
-                      <td style={{padding:'10px 8px', fontWeight:600, color:'#1976d2'}}>{order.operateur || order.operator || '—'}</td>
-                      <td style={{padding:'10px 8px'}}>
-                        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
-                          <button style={{background:'#1976d2', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90}} onClick={e=>{e.stopPropagation();handleShowDetails(order);}}>Détails</button>
-                          <button style={{background:'#43a047', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90, opacity:order.logistique?0.7:1}} onClick={e=>e.stopPropagation()||handleSendLogistique(idx)} disabled={order.logistique}>{order.logistique ? 'Envoyée' : 'Logistique'}</button>
-                          <button style={{background:'#ffb300', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90}} onClick={e=>e.stopPropagation()||handleEdit(idx)}>Modifier</button>
-                          <button style={{background:'#e53935', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90}} onClick={e=>e.stopPropagation()||handleDelete(idx)}>Supprimer</button>
-                        </div>
-                      </td>
+            <section style={{marginBottom:36}}>
+              <h3 style={{fontWeight:700, fontSize:'1.13rem', marginBottom:18, color:'#1976d2'}}>Liste des commandes</h3>
+              
+              {/* Barre de recherche et filtres */}
+              <div style={{marginBottom:20, display:'flex', gap:12, flexWrap:'wrap'}}>
+                <input
+                  type="text"
+                  placeholder="Rechercher par nom..."
+                  value={filters.client}
+                  onChange={e => setFilters(f => ({...f, client: e.target.value}))}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 6,
+                    border: '1.2px solid #cfd8dc',
+                    fontSize: '0.97rem',
+                    minWidth: 200
+                  }}
+                />
+                <select
+                  value={filters.statut}
+                  onChange={e => setFilters(f => ({...f, statut: e.target.value}))}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 6,
+                    border: '1.2px solid #cfd8dc',
+                    fontSize: '0.97rem',
+                    background: '#fff'
+                  }}
+                >
+                  <option value="">Tous les statuts</option>
+                  <option value="En attente">En attente</option>
+                  <option value="En cours">En cours</option>
+                  <option value="Expédiée">Expédiée</option>
+                  <option value="Livrée">Livrée</option>
+                  <option value="Annulée">Annulée</option>
+                </select>
+                <input
+                  type="date"
+                  value={filters.dateStart}
+                  onChange={e => setFilters(f => ({...f, dateStart: e.target.value}))}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 6,
+                    border: '1.2px solid #cfd8dc',
+                    fontSize: '0.97rem'
+                  }}
+                />
+                <input
+                  type="date"
+                  value={filters.dateEnd}
+                  onChange={e => setFilters(f => ({...f, dateEnd: e.target.value}))}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 6,
+                    border: '1.2px solid #cfd8dc',
+                    fontSize: '0.97rem'
+                  }}
+                />
+              </div>
+
+              <div style={{display:'flex', gap:12, marginBottom:16}}>
+                <button 
+                  onClick={exportToExcel}
+                  style={{
+                    background:'#43a047',
+                    color:'#fff',
+                    border:'none',
+                    borderRadius:8,
+                    padding:'10px 24px',
+                    fontWeight:600,
+                    fontSize:'0.97rem',
+                    cursor:'pointer',
+                    display:'flex',
+                    alignItems:'center',
+                    gap:8
+                  }}
+                >
+                  <FaFileExport /> Exporter en Excel
+                </button>
+                <button 
+                  onClick={exportToPDF}
+                  style={{
+                    background:'#e53935',
+                    color:'#fff',
+                    border:'none',
+                    borderRadius:8,
+                    padding:'10px 24px',
+                    fontWeight:600,
+                    fontSize:'0.97rem',
+                    cursor:'pointer',
+                    display:'flex',
+                    alignItems:'center',
+                    gap:8
+                  }}
+                >
+                  <FaFileExport /> Exporter en PDF
+                </button>
+              </div>
+
+              <div style={{overflowX:'auto'}}>
+                <table style={{width:'100%', borderCollapse:'separate', borderSpacing:0, fontSize:'0.99rem', background:'#fff', borderRadius:10}}>
+                  <thead>
+                    <tr style={{background:'#f7f8fa'}}>
+                      <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Client</th>
+                      <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Téléphone</th>
+                      <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Adresse</th>
+                      <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Produit</th>
+                      <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Quantité</th>
+                      <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Prix</th>
+                      <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Statut</th>
+                      <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Date</th>
+                      <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Opérateur</th>
+                      <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Actes</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {pendingOrders.map((order, idx) => (
+                      <tr key={order._id || order.id || idx} style={{background: order.logistique ? '#e3f2fd' : 'white', transition:'background 0.2s', borderBottom:'1.5px solid #f0f0f0', cursor:'pointer'}} onMouseOver={e=>e.currentTarget.style.background='#f5f5f5'} onMouseOut={e=>e.currentTarget.style.background=order.logistique ? '#e3f2fd' : 'white'}>
+                        <td style={{padding:'10px 8px', fontWeight:600, color:'#222'}}>{order.nom} {order.prenom}</td>
+                        <td style={{padding:'10px 8px'}}>{order.phone}</td>
+                        <td style={{padding:'10px 8px'}}>{order.adresse}</td>
+                        <td style={{padding:'10px 8px'}}>{order.produit}</td>
+                        <td style={{padding:'10px 8px', textAlign:'center'}}>{order.quantite}</td>
+                        <td style={{padding:'10px 8px', textAlign:'center'}}>{order.prix}€</td>
+                        <td style={{padding:'10px 8px'}}>{order.statut}</td>
+                        <td style={{padding:'10px 8px'}}>{order.date}</td>
+                        <td style={{padding:'10px 8px', fontWeight:600, color:'#1976d2'}}>{order.operateur || order.operator || '—'}</td>
+                        <td style={{padding:'10px 8px'}}>
+                          <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+                            <button style={{background:'#1976d2', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90}} onClick={e=>{e.stopPropagation();handleShowDetails(order);}}>Détails</button>
+                            <button style={{background:'#43a047', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90, opacity:order.logistique?0.7:1}} onClick={e=>e.stopPropagation()||handleSendLogistique(idx)} disabled={order.logistique}>{order.logistique ? 'Envoyée' : 'Logistique'}</button>
+                            <button style={{background:'#ffb300', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90}} onClick={e=>e.stopPropagation()||handleEdit(idx)}>Modifier</button>
+                            <button style={{background:'#e53935', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90}} onClick={e=>e.stopPropagation()||handleDelete(idx)}>Supprimer</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* Détail d'une commande */}
+            {selectedOrder && (
+              <section style={{marginBottom:32}}>
+                <h3 style={{fontWeight:700, fontSize:'1.13rem', marginBottom:18, color:'#1976d2'}}>Détail de la commande {selectedOrder.id}</h3>
+                <div style={{background:'#fafbfc', borderRadius:12, padding:24, border:'1.5px solid #e0e0e0', maxWidth:700, margin:'0 auto'}}>
+                  <div style={{marginBottom:8}}><b>Client :</b> {selectedOrder.nom} {selectedOrder.prenom}</div>
+                  <div style={{marginBottom:8}}><b>Téléphone :</b> {selectedOrder.phone}</div>
+                  <div style={{marginBottom:8}}><b>Adresse :</b> {selectedOrder.adresse}</div>
+                  <div style={{marginBottom:8}}><b>Produit :</b> {selectedOrder.produit}</div>
+                  <div style={{marginBottom:8}}><b>Quantité :</b> {selectedOrder.quantite}</div>
+                  <div style={{marginBottom:8}}><b>Prix :</b> {selectedOrder.prix} €</div>
+                  <div style={{marginBottom:8}}><b>Envoyée à la logistique :</b> {selectedOrder.logistique ? 'Oui' : 'Non'}</div>
+                  <button style={{marginTop:12, background:'#888', color:'#fff', border:'none', borderRadius:8, padding:'10px 28px', fontWeight:700, fontSize:'1rem', cursor:'pointer', display:'block', marginLeft:'auto', marginRight:'auto'}} onClick={()=>setSelectedOrder(null)}>Fermer</button>
+                </div>
+              </section>
+            )}
           </div>
         )}
         {activeTab === 'Recherché' && (
