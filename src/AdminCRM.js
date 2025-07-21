@@ -139,8 +139,26 @@ function AdminCRM() {
     fetchRegistrationRequests();
   }, [activeTab]);
 
-  // Filtrage dynamique (exclut les commandes externes)
+  // Filtrage dynamique pour la section "Commandes" (UNIQUEMENT les commandes externes)
   const filteredOrders = orders.filter(order => {
+    // Inclure UNIQUEMENT les commandes externes en attente
+    if (order.statut === 'external_pending' || order.status === 'external_pending') {
+      const matchClient = !filters.client || order.nom.toLowerCase().includes(filters.client.toLowerCase()) || order.prenom.toLowerCase().includes(filters.client.toLowerCase());
+      const matchPhone = !filters.phone || order.phone.includes(filters.phone);
+      const matchId = !filters.id || order.id.toLowerCase().includes(filters.id.toLowerCase());
+      const matchStatut = !filters.statut || order.statut === filters.statut;
+      const matchProduit = !filters.produit || order.produit.toLowerCase().includes(filters.produit.toLowerCase());
+      const matchOperateur = !filters.operateur || order.operateur.toLowerCase().includes(filters.operateur.toLowerCase());
+      const matchCanal = !filters.canal || order.canal.toLowerCase().includes(filters.canal.toLowerCase());
+      const matchDateStart = !filters.dateStart || order.date >= filters.dateStart;
+      const matchDateEnd = !filters.dateEnd || order.date <= filters.dateEnd;
+      return matchClient && matchPhone && matchId && matchStatut && matchProduit && matchOperateur && matchCanal && matchDateStart && matchDateEnd;
+    }
+    return false;
+  });
+
+  // Filtrage pour la section "Commandes à traiter" (toutes les commandes SAUF les externes)
+  const pendingOrders = orders.filter(order => {
     // Exclure les commandes externes en attente
     if (order.statut === 'external_pending' || order.status === 'external_pending') {
       return false;
@@ -265,7 +283,8 @@ function AdminCRM() {
 
   // Fonction d'export Excel
   const exportToExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(orders.map(order => ({
+    const dataToExport = activeTab === 'Commandes' ? filteredOrders : activeTab === 'Commandes à traiter' ? pendingOrders : orders;
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport.map(order => ({
       'ID': order.id,
       'Nom': order.nom,
       'Prénom': order.prenom,
@@ -277,18 +296,20 @@ function AdminCRM() {
       'Logistique': order.logistique ? 'Oui' : 'Non'
     })));
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Commandes");
-    XLSX.writeFile(workbook, "commandes.xlsx");
+    XLSX.utils.book_append_sheet(workbook, worksheet, activeTab === 'Commandes' ? "Commandes Externes" : activeTab === 'Commandes à traiter' ? "Commandes à Traiter" : "Toutes les Commandes");
+    XLSX.writeFile(workbook, `${activeTab.toLowerCase().replace(/\s+/g, '_')}.xlsx`);
   };
 
   // Fonction d'export PDF
   const exportToPDF = () => {
     const doc = new jsPDF('l', 'mm', 'a4');
     doc.setFontSize(16);
-    doc.text('Liste des Commandes', 14, 15);
+    const title = activeTab === 'Commandes' ? 'Commandes Externes' : activeTab === 'Commandes à traiter' ? 'Commandes à Traiter' : 'Liste des Commandes';
+    doc.text(title, 14, 15);
     
+    const dataToExport = activeTab === 'Commandes' ? filteredOrders : activeTab === 'Commandes à traiter' ? pendingOrders : orders;
     const tableColumn = ['ID', 'Client', 'Téléphone', 'Adresse', 'Produit', 'Quantité', 'Prix', 'Logistique'];
-    const tableRows = orders.map(order => [
+    const tableRows = dataToExport.map(order => [
       order.id,
       `${order.nom} ${order.prenom}`,
       order.phone,
@@ -327,7 +348,7 @@ function AdminCRM() {
       margin: { top: 25 }
     });
     
-    doc.save('commandes.pdf');
+    doc.save(`${activeTab.toLowerCase().replace(/\s+/g, '_')}.pdf`);
   };
 
   function getPeriodRange(period, customRange) {
@@ -727,7 +748,8 @@ function AdminCRM() {
             </section>
             {/* Tableau des commandes */}
             <section style={{marginBottom:36}}>
-              <h3 style={{fontWeight:700, fontSize:'1.13rem', marginBottom:18, color:'#1976d2'}}>Liste des commandes</h3>
+              <h3 style={{fontWeight:700, fontSize:'1.13rem', marginBottom:18, color:'#1976d2'}}>Commandes externes</h3>
+              <p style={{color:'#666', marginBottom:16}}>Commandes reçues depuis les sites partenaires en attente de traitement</p>
               
               {/* Barre de recherche et filtres */}
               <div style={{marginBottom:20, display:'flex', gap:12, flexWrap:'wrap'}}>
@@ -841,7 +863,7 @@ function AdminCRM() {
                   </tr>
                 </thead>
                                   <tbody>
-                    {filteredOrders.map((order, idx) => (
+                    {pendingOrders.map((order, idx) => (
                     <tr key={order._id || order.id || idx} style={{background: order.logistique ? '#e3f2fd' : 'white', transition:'background 0.2s', borderBottom:'1.5px solid #f0f0f0', cursor:'pointer'}} onMouseOver={e=>e.currentTarget.style.background='#f5f5f5'} onMouseOut={e=>e.currentTarget.style.background=order.logistique ? '#e3f2fd' : 'white'}>
                       <td style={{padding:'10px 8px', fontWeight:600, color:'#222'}}>{order.nom} {order.prenom}</td>
                       <td style={{padding:'10px 8px'}}>{order.phone}</td>
@@ -885,7 +907,93 @@ function AdminCRM() {
           </div>
         )}
         {activeTab === 'Commandes à traiter' && (
-          <AdminExternalOrders />
+          <div style={{maxWidth: 1100, margin: '0 auto', textAlign:'left', background:'#fff', borderRadius:16, boxShadow:'0 2px 12px rgba(0,0,0,0.07)', padding:'32px 28px 24px 28px', border:'1.5px solid #e0e0e0'}}>
+            <h2 style={{fontWeight:900, fontSize:'2rem', marginBottom:24, letterSpacing:1, display:'flex', alignItems:'center', gap:8}}>
+              <span role="img" aria-label="orders">📋</span> Commandes à traiter
+            </h2>
+            <p style={{color:'#666', marginBottom:24}}>Commandes validées par les opérateurs en attente de traitement</p>
+            
+            {/* Filtres */}
+            <div style={{display:'flex', flexWrap:'wrap', gap:18, marginBottom:24, alignItems:'end'}}>
+              <div style={{display:'flex', flexDirection:'column', gap:4}}>
+                <label>Rechercher par nom...</label>
+                <input type="text" placeholder="Nom ou prénom..." value={filters.client} onChange={e=>setFilters(f=>({...f, client:e.target.value}))} style={{padding:'8px 12px', borderRadius:6, border:'1.2px solid #cfd8dc', fontSize:'1rem'}} />
+              </div>
+              <div style={{display:'flex', flexDirection:'column', gap:4}}>
+                <label>Tous les statuts</label>
+                <select value={filters.statut} onChange={e=>setFilters(f=>({...f, statut:e.target.value}))} style={{padding:'8px 12px', borderRadius:6, border:'1.2px solid #cfd8dc', fontSize:'1rem'}}>
+                  <option value="">Tous</option>
+                  <option value="En attente">🕒 En attente</option>
+                  <option value="En cours">En cours</option>
+                  <option value="Expédiée">Expédiée</option>
+                  <option value="Livrée">✅ Livrée</option>
+                  <option value="Annulée">❌ Annulée</option>
+                  <option value="Litige">🚨 Litige</option>
+                </select>
+              </div>
+              <div style={{display:'flex', flexDirection:'column', gap:4}}>
+                <label>Date début</label>
+                <input type="date" value={filters.dateStart} onChange={e=>setFilters(f=>({...f, dateStart:e.target.value}))} style={{padding:'8px 12px', borderRadius:6, border:'1.2px solid #cfd8dc', fontSize:'1rem'}} />
+              </div>
+              <div style={{display:'flex', flexDirection:'column', gap:4}}>
+                <label>Date fin</label>
+                <input type="date" value={filters.dateEnd} onChange={e=>setFilters(f=>({...f, dateEnd:e.target.value}))} style={{padding:'8px 12px', borderRadius:6, border:'1.2px solid #cfd8dc', fontSize:'1rem'}} />
+              </div>
+            </div>
+
+            {/* Boutons d'export */}
+            <div style={{display:'flex', gap:12, marginBottom:24}}>
+              <button onClick={exportToExcel} style={{background:'#43a047', color:'#fff', border:'none', borderRadius:8, padding:'12px 24px', fontWeight:700, fontSize:'1rem', cursor:'pointer'}}>
+                📊 Exporter en Excel
+              </button>
+              <button onClick={exportToPDF} style={{background:'#e53935', color:'#fff', border:'none', borderRadius:8, padding:'12px 24px', fontWeight:700, fontSize:'1rem', cursor:'pointer'}}>
+                📄 Exporter en PDF
+              </button>
+            </div>
+
+            {/* Tableau des commandes */}
+            <div style={{overflowX:'auto'}}>
+              <table style={{width:'100%', borderCollapse:'separate', borderSpacing:0, fontSize:'0.99rem', background:'#fff', borderRadius:10}}>
+                <thead>
+                  <tr style={{background:'#f7f8fa'}}>
+                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Client</th>
+                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Téléphone</th>
+                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Adresse</th>
+                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Produit</th>
+                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Quantité</th>
+                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Prix</th>
+                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Statut</th>
+                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Date</th>
+                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Opérateur</th>
+                    <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Actes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingOrders.map((order, idx) => (
+                    <tr key={order._id || order.id || idx} style={{background: order.logistique ? '#e3f2fd' : 'white', transition:'background 0.2s', borderBottom:'1.5px solid #f0f0f0', cursor:'pointer'}} onMouseOver={e=>e.currentTarget.style.background='#f5f5f5'} onMouseOut={e=>e.currentTarget.style.background=order.logistique ? '#e3f2fd' : 'white'}>
+                      <td style={{padding:'10px 8px', fontWeight:600, color:'#222'}}>{order.nom} {order.prenom}</td>
+                      <td style={{padding:'10px 8px'}}>{order.phone}</td>
+                      <td style={{padding:'10px 8px'}}>{order.adresse}</td>
+                      <td style={{padding:'10px 8px'}}>{order.produit}</td>
+                      <td style={{padding:'10px 8px', textAlign:'center'}}>{order.quantite}</td>
+                      <td style={{padding:'10px 8px', textAlign:'center'}}>{order.prix}€</td>
+                      <td style={{padding:'10px 8px'}}>{order.statut}</td>
+                      <td style={{padding:'10px 8px'}}>{order.date}</td>
+                      <td style={{padding:'10px 8px', fontWeight:600, color:'#1976d2'}}>{order.operateur || order.operator || '—'}</td>
+                      <td style={{padding:'10px 8px'}}>
+                        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+                          <button style={{background:'#1976d2', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90}} onClick={e=>{e.stopPropagation();handleShowDetails(order);}}>Détails</button>
+                          <button style={{background:'#43a047', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90, opacity:order.logistique?0.7:1}} onClick={e=>e.stopPropagation()||handleSendLogistique(idx)} disabled={order.logistique}>{order.logistique ? 'Envoyée' : 'Logistique'}</button>
+                          <button style={{background:'#ffb300', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90}} onClick={e=>e.stopPropagation()||handleEdit(idx)}>Modifier</button>
+                          <button style={{background:'#e53935', color:'#fff', border:'none', borderRadius:7, padding:'7px 16px', fontWeight:600, fontSize:'0.97rem', cursor:'pointer', minWidth:90}} onClick={e=>e.stopPropagation()||handleDelete(idx)}>Supprimer</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
         {activeTab === 'Recherché' && (
           <div style={{maxWidth: 1100, margin: '0 auto', textAlign:'left', background:'#fff', borderRadius:16, boxShadow:'0 2px 12px rgba(0,0,0,0.07)', padding:'32px 28px 24px 28px', border:'1.5px solid #e0e0e0'}}>
