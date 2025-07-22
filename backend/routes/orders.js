@@ -6,6 +6,15 @@ const Order = require('../models/Order');
 router.get('/', async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
+    console.log('=== DEBUG BACKEND ===');
+    console.log('Nombre de commandes trouvées:', orders.length);
+    console.log('Commandes brutes:', orders.map(o => ({ 
+      id: o._id, 
+      status: o.status, 
+      clientName: o.clientName,
+      clientPhone: o.clientPhone 
+    })));
+    
     // Mapping pour compatibilité frontend
     const mappedOrders = orders.map(order => {
       // Découper le nom complet si possible
@@ -33,6 +42,16 @@ router.get('/', async (req, res) => {
         ...order.toObject()
       };
     });
+    
+    console.log('Commandes mappées:', mappedOrders.map(o => ({ 
+      id: o.id, 
+      statut: o.statut, 
+      status: o.status, 
+      nom: o.nom,
+      phone: o.phone 
+    })));
+    console.log('=== FIN DEBUG BACKEND ===');
+    
     res.json(mappedOrders);
   } catch (error) {
     console.error('Erreur lors de la récupération des commandes:', error);
