@@ -271,10 +271,47 @@ function AdminCRM() {
 
   // Supprimer une commande
   const handleDelete = async (idx) => {
-    const id = orders[idx].id;
-    await fetch(`${API_URL}/api/orders/${id}`, { method: 'DELETE' });
-    setOrders(orders.filter((_, i) => i !== idx));
-    setSelectedOrder(null);
+    try {
+      console.log('=== SUPPRESSION COMMANDE ===');
+      console.log('Index à supprimer:', idx);
+      console.log('Commande à supprimer:', orders[idx]);
+      
+      const id = orders[idx].id;
+      console.log('ID à supprimer:', id);
+      
+      // Confirmation de suppression
+      if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette commande ?')) {
+        return;
+      }
+      
+      const response = await fetch(`${API_URL}/api/orders/${id}`, { 
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Réponse du serveur:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de la suppression');
+      }
+      
+      const result = await response.json();
+      console.log('Résultat de suppression:', result);
+      
+      // Mettre à jour l'état local
+      setOrders(orders.filter((_, i) => i !== idx));
+      setSelectedOrder(null);
+      
+      // Message de succès
+      alert('Commande supprimée avec succès !');
+      
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      alert('Erreur lors de la suppression: ' + error.message);
+    }
   };
 
   // Modifier une commande
