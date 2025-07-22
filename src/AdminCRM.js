@@ -122,9 +122,9 @@ function AdminCRM() {
     }
     fetchOrders();
 
-    // Rafraîchir les commandes toutes les 30 secondes
-    const interval = setInterval(fetchOrders, 30000);
-    return () => clearInterval(interval);
+    // Rafraîchissement automatique désactivé pour éviter que les suppressions soient annulées
+    // const interval = setInterval(fetchOrders, 30000);
+    // return () => clearInterval(interval);
   }, []);
 
   // Charger les demandes d'inscription
