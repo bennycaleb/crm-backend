@@ -276,11 +276,12 @@ function AdminCRM() {
       console.log('Index à supprimer:', idx);
       console.log('Commande à supprimer:', orders[idx]);
       
-      const id = orders[idx].id;
+      const orderToDelete = orders[idx];
+      const id = orderToDelete.id || orderToDelete._id;
       console.log('ID à supprimer:', id);
       
       // Confirmation de suppression
-      if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette commande ?')) {
+      if (!window.confirm(`Êtes-vous sûr de vouloir supprimer la commande ${id} ?`)) {
         return;
       }
       
@@ -301,8 +302,19 @@ function AdminCRM() {
       const result = await response.json();
       console.log('Résultat de suppression:', result);
       
-      // Mettre à jour l'état local
-      setOrders(orders.filter((_, i) => i !== idx));
+      // Mettre à jour l'état local en supprimant la commande par ID
+      const updatedOrders = orders.filter(order => {
+        const orderId = order.id || order._id;
+        const deleteId = id;
+        const shouldKeep = orderId !== deleteId;
+        console.log(`Commande ${orderId} vs ${deleteId}: ${shouldKeep ? 'GARDER' : 'SUPPRIMER'}`);
+        return shouldKeep;
+      });
+      
+      console.log('Commandes avant suppression:', orders.length);
+      console.log('Commandes après suppression:', updatedOrders.length);
+      
+      setOrders(updatedOrders);
       setSelectedOrder(null);
       
       // Message de succès
