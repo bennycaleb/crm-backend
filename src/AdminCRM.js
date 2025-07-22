@@ -159,6 +159,16 @@ function AdminCRM() {
     
     // Inclure TOUTES les commandes dans la section "Commandes" pour pouvoir appeler les clients
     // Pas de restriction sur le statut - toutes les commandes sont incluses
+    
+    // Vérifier si des filtres sont actifs
+    const hasActiveFilters = Object.values(filters).some(value => value && value !== '');
+    
+    // Si aucun filtre n'est actif, inclure TOUTES les commandes
+    if (!hasActiveFilters) {
+      return true;
+    }
+    
+    // Si des filtres sont actifs, appliquer la logique de filtrage
     const matchClient = !filters.client || 
       (order.nom && order.nom.toLowerCase().includes(filters.client.toLowerCase())) || 
       (order.prenom && order.prenom.toLowerCase().includes(filters.client.toLowerCase()));
@@ -195,6 +205,8 @@ function AdminCRM() {
   // Debug: afficher les commandes filtrées
   console.log('=== DEBUG COMMANDES ===');
   console.log('Nombre total de commandes reçues:', orders.length);
+  console.log('Filtres actifs:', filters);
+  console.log('Filtres vides?', Object.values(filters).every(v => !v || v === ''));
   console.log('Commandes filtrées (section Commandes):', filteredOrders.map(order => ({ 
     id: order.id, 
     statut: order.statut, 
@@ -203,7 +215,6 @@ function AdminCRM() {
     phone: order.phone
   })));
   console.log('Nombre de commandes filtrées:', filteredOrders.length);
-  console.log('Filtres actifs:', filters);
   console.log('=== FIN DEBUG ===');
 
   // Ajouter ou modifier une commande
