@@ -107,6 +107,13 @@ function AdminCRM() {
         const res = await fetch(`${API_URL}/api/orders`);
         if (!res.ok) throw new Error('API non disponible');
         const data = await res.json();
+        console.log('Commandes reçues du backend:', data.map(order => ({ 
+          id: order.id, 
+          statut: order.statut, 
+          status: order.status, 
+          nom: order.nom,
+          clientName: order.clientName 
+        })));
         setOrders(data);
       } catch (e) {
         setApiError('Impossible de contacter le serveur des commandes. Vérifiez que le backend est bien lancé.');
@@ -139,22 +146,29 @@ function AdminCRM() {
     fetchRegistrationRequests();
   }, [activeTab]);
 
-  // Filtrage dynamique pour la section "Commandes" (UNIQUEMENT les commandes externes)
+  // Filtrage dynamique pour la section "Commandes" (TOUTES les commandes pour pouvoir appeler les clients)
   const filteredOrders = orders.filter(order => {
-    // Inclure UNIQUEMENT les commandes externes en attente
-    if (order.statut === 'external_pending' || order.status === 'external_pending') {
-      const matchClient = !filters.client || order.nom.toLowerCase().includes(filters.client.toLowerCase()) || order.prenom.toLowerCase().includes(filters.client.toLowerCase());
-      const matchPhone = !filters.phone || order.phone.includes(filters.phone);
-      const matchId = !filters.id || order.id.toLowerCase().includes(filters.id.toLowerCase());
-      const matchStatut = !filters.statut || order.statut === filters.statut;
-      const matchProduit = !filters.produit || order.produit.toLowerCase().includes(filters.produit.toLowerCase());
-      const matchOperateur = !filters.operateur || order.operateur.toLowerCase().includes(filters.operateur.toLowerCase());
-      const matchCanal = !filters.canal || order.canal.toLowerCase().includes(filters.canal.toLowerCase());
-      const matchDateStart = !filters.dateStart || order.date >= filters.dateStart;
-      const matchDateEnd = !filters.dateEnd || order.date <= filters.dateEnd;
-      return matchClient && matchPhone && matchId && matchStatut && matchProduit && matchOperateur && matchCanal && matchDateStart && matchDateEnd;
-    }
-    return false;
+    // Debug: afficher chaque commande pour voir son statut
+    console.log('Vérification commande:', { 
+      id: order.id, 
+      statut: order.statut, 
+      status: order.status, 
+      nom: order.nom
+    });
+    
+    // Inclure TOUTES les commandes dans la section "Commandes" pour pouvoir appeler les clients
+    const matchClient = !filters.client || 
+      (order.nom && order.nom.toLowerCase().includes(filters.client.toLowerCase())) || 
+      (order.prenom && order.prenom.toLowerCase().includes(filters.client.toLowerCase()));
+    const matchPhone = !filters.phone || (order.phone && order.phone.includes(filters.phone));
+    const matchId = !filters.id || (order.id && order.id.toLowerCase().includes(filters.id.toLowerCase()));
+    const matchStatut = !filters.statut || order.statut === filters.statut;
+    const matchProduit = !filters.produit || (order.produit && order.produit.toLowerCase().includes(filters.produit.toLowerCase()));
+    const matchOperateur = !filters.operateur || (order.operateur && order.operateur.toLowerCase().includes(filters.operateur.toLowerCase()));
+    const matchCanal = !filters.canal || (order.canal && order.canal.toLowerCase().includes(filters.canal.toLowerCase()));
+    const matchDateStart = !filters.dateStart || order.date >= filters.dateStart;
+    const matchDateEnd = !filters.dateEnd || order.date <= filters.dateEnd;
+    return matchClient && matchPhone && matchId && matchStatut && matchProduit && matchOperateur && matchCanal && matchDateStart && matchDateEnd;
   });
 
   // Filtrage pour la section "Commandes à traiter" (toutes les commandes SAUF les externes)
@@ -175,6 +189,16 @@ function AdminCRM() {
     const matchDateEnd = !filters.dateEnd || order.date <= filters.dateEnd;
     return matchClient && matchPhone && matchId && matchStatut && matchProduit && matchOperateur && matchCanal && matchDateStart && matchDateEnd;
   });
+
+  // Debug: afficher les commandes filtrées
+  console.log('Commandes filtrées (section Commandes):', filteredOrders.map(order => ({ 
+    id: order.id, 
+    statut: order.statut, 
+    status: order.status, 
+    nom: order.nom 
+  })));
+  console.log('Nombre total de commandes:', orders.length);
+  console.log('Nombre de commandes externes trouvées:', filteredOrders.length);
 
   // Ajouter ou modifier une commande
   const handleOrderSubmit = async (e) => {
@@ -748,8 +772,8 @@ function AdminCRM() {
             </section>
             {/* Tableau des commandes */}
             <section style={{marginBottom:36}}>
-              <h3 style={{fontWeight:700, fontSize:'1.13rem', marginBottom:18, color:'#1976d2'}}>Commandes externes</h3>
-              <p style={{color:'#666', marginBottom:16}}>Commandes reçues depuis les sites partenaires en attente de traitement</p>
+              <h3 style={{fontWeight:700, fontSize:'1.13rem', marginBottom:18, color:'#1976d2'}}>Toutes les commandes</h3>
+              <p style={{color:'#666', marginBottom:16}}>Toutes les commandes pour pouvoir appeler les clients</p>
               
               {/* Barre de recherche et filtres */}
               <div style={{marginBottom:20, display:'flex', gap:12, flexWrap:'wrap'}}>
