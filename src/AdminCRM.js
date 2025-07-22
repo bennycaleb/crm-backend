@@ -157,14 +157,17 @@ function AdminCRM() {
       phone: order.phone
     });
     
-    // Inclure TOUTES les commandes dans la section "Commandes" pour pouvoir appeler les clients
+    // FORCER l'affichage de TOUTES les commandes dans la section "Commandes"
     // Pas de restriction sur le statut - toutes les commandes sont incluses
     
     // Vérifier si des filtres sont actifs
     const hasActiveFilters = Object.values(filters).some(value => value && value !== '');
+    console.log('Filtres actifs?', hasActiveFilters);
+    console.log('Valeurs des filtres:', filters);
     
     // Si aucun filtre n'est actif, inclure TOUTES les commandes
     if (!hasActiveFilters) {
+      console.log('Aucun filtre actif - inclure TOUTES les commandes');
       return true;
     }
     
@@ -180,7 +183,11 @@ function AdminCRM() {
     const matchCanal = !filters.canal || (order.canal && order.canal.toLowerCase().includes(filters.canal.toLowerCase()));
     const matchDateStart = !filters.dateStart || order.date >= filters.dateStart;
     const matchDateEnd = !filters.dateEnd || order.date <= filters.dateEnd;
-    return matchClient && matchPhone && matchId && matchStatut && matchProduit && matchOperateur && matchCanal && matchDateStart && matchDateEnd;
+    
+    const shouldInclude = matchClient && matchPhone && matchId && matchStatut && matchProduit && matchOperateur && matchCanal && matchDateStart && matchDateEnd;
+    console.log(`Commande ${order.id} (${order.statut}): ${shouldInclude ? 'INCLURE' : 'EXCLURE'}`);
+    
+    return shouldInclude;
   });
 
   // Filtrage pour la section "Commandes à traiter" (toutes les commandes SAUF les externes)
