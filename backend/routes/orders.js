@@ -297,4 +297,35 @@ router.post('/external', async (req, res) => {
   }
 });
 
+// DELETE /api/orders/:id - Supprimer une commande
+router.delete('/:id', async (req, res) => {
+  try {
+    console.log('=== SUPPRESSION COMMANDE ===');
+    console.log('ID à supprimer:', req.params.id);
+    
+    const { id } = req.params;
+    
+    // Rechercher et supprimer la commande
+    const deletedOrder = await Order.findByIdAndDelete(id);
+    
+    if (!deletedOrder) {
+      console.log('Commande non trouvée pour suppression');
+      return res.status(404).json({ error: 'Commande non trouvée' });
+    }
+    
+    console.log('Commande supprimée avec succès:', deletedOrder._id);
+    res.json({ 
+      success: true, 
+      message: 'Commande supprimée avec succès',
+      deletedOrder 
+    });
+  } catch (error) {
+    console.error('Erreur lors de la suppression de la commande:', error);
+    res.status(500).json({ 
+      error: 'Erreur serveur lors de la suppression',
+      details: error.message 
+    });
+  }
+});
+
 module.exports = router; 
