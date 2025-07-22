@@ -886,7 +886,7 @@ function AdminCRM() {
                     <th style={{padding:'12px 8px', fontWeight:700, color:'#222', borderBottom:'2px solid #e0e0e0'}}>Actes</th>
                   </tr>
                 </thead>
-                                  <tbody>
+                <tbody>
                     {pendingOrders.map((order, idx) => (
                     <tr key={order._id || order.id || idx} style={{background: order.logistique ? '#e3f2fd' : 'white', transition:'background 0.2s', borderBottom:'1.5px solid #f0f0f0', cursor:'pointer'}} onMouseOver={e=>e.currentTarget.style.background='#f5f5f5'} onMouseOut={e=>e.currentTarget.style.background=order.logistique ? '#e3f2fd' : 'white'}>
                       <td style={{padding:'10px 8px', fontWeight:600, color:'#222'}}>{order.nom} {order.prenom}</td>
@@ -1206,7 +1206,7 @@ function AdminCRM() {
             </div>
             {/* Résultats */}
             <div style={{overflowX:'auto', marginTop:18}}>
-              {Object.values(filters).some(v => v && v !== '') ? (
+              {filteredOrders.length > 0 ? (
                 <table style={{width:'100%', borderCollapse:'separate', borderSpacing:0, fontSize:'0.99rem', background:'#fff', borderRadius:10}}>
                   <thead>
                     <tr style={{background:'#f7f8fa'}}>
@@ -1244,7 +1244,7 @@ function AdminCRM() {
                   </tbody>
                 </table>
               ) : (
-                <div style={{padding:32, textAlign:'center', color:'#888', fontSize:'1.1rem'}}>Veuillez saisir au moins un critère de recherche pour afficher les commandes.</div>
+                <div style={{padding:32, textAlign:'center', color:'#888', fontSize:'1.1rem'}}>Aucune commande trouvée.</div>
               )}
             </div>
             {/* Détail d'une commande (fiche) */}
