@@ -153,10 +153,12 @@ function AdminCRM() {
       id: order.id, 
       statut: order.statut, 
       status: order.status, 
-      nom: order.nom
+      nom: order.nom,
+      phone: order.phone
     });
     
     // Inclure TOUTES les commandes dans la section "Commandes" pour pouvoir appeler les clients
+    // Pas de restriction sur le statut - toutes les commandes sont incluses
     const matchClient = !filters.client || 
       (order.nom && order.nom.toLowerCase().includes(filters.client.toLowerCase())) || 
       (order.prenom && order.prenom.toLowerCase().includes(filters.client.toLowerCase()));
@@ -191,14 +193,18 @@ function AdminCRM() {
   });
 
   // Debug: afficher les commandes filtrées
+  console.log('=== DEBUG COMMANDES ===');
+  console.log('Nombre total de commandes reçues:', orders.length);
   console.log('Commandes filtrées (section Commandes):', filteredOrders.map(order => ({ 
     id: order.id, 
     statut: order.statut, 
     status: order.status, 
-    nom: order.nom 
+    nom: order.nom,
+    phone: order.phone
   })));
-  console.log('Nombre total de commandes:', orders.length);
-  console.log('Nombre de commandes externes trouvées:', filteredOrders.length);
+  console.log('Nombre de commandes filtrées:', filteredOrders.length);
+  console.log('Filtres actifs:', filters);
+  console.log('=== FIN DEBUG ===');
 
   // Ajouter ou modifier une commande
   const handleOrderSubmit = async (e) => {
