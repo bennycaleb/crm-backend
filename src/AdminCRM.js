@@ -16,7 +16,7 @@ import AdminUsers from './components/AdminUsers';
 const tabs = [
   { label: 'Statistiques' },
   { label: 'Commandes' },
-  { label: 'Commandes à traiter' },
+  { label: 'Commandes traitées' },
   { label: 'Recherché' },
   { label: 'Vendeurs' },
   { label: 'Demandes d\'inscription' },
@@ -190,7 +190,7 @@ function AdminCRM() {
     return shouldInclude;
   });
 
-  // Filtrage pour la section "Commandes à traiter" (toutes les commandes SAUF les externes)
+  // Filtrage pour la section "Commandes traitées" (toutes les commandes SAUF les externes)
   const pendingOrders = orders.filter(order => {
     // Exclure les commandes externes en attente
     if (order.statut === 'external_pending' || order.status === 'external_pending') {
@@ -380,7 +380,7 @@ function AdminCRM() {
 
   // Fonction d'export Excel
   const exportToExcel = () => {
-    const dataToExport = activeTab === 'Commandes' ? filteredOrders : activeTab === 'Commandes à traiter' ? pendingOrders : orders;
+    const dataToExport = activeTab === 'Commandes' ? filteredOrders : activeTab === 'Commandes traitées' ? pendingOrders : orders;
     const worksheet = XLSX.utils.json_to_sheet(dataToExport.map(order => ({
       'ID': order.id,
       'Nom': order.nom,
@@ -393,7 +393,7 @@ function AdminCRM() {
       'Logistique': order.logistique ? 'Oui' : 'Non'
     })));
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, activeTab === 'Commandes' ? "Commandes Externes" : activeTab === 'Commandes à traiter' ? "Commandes à Traiter" : "Toutes les Commandes");
+    XLSX.utils.book_append_sheet(workbook, worksheet, activeTab === 'Commandes' ? "Commandes Externes" : activeTab === 'Commandes traitées' ? "Commandes Traitées" : "Toutes les Commandes");
     XLSX.writeFile(workbook, `${activeTab.toLowerCase().replace(/\s+/g, '_')}.xlsx`);
   };
 
@@ -401,10 +401,10 @@ function AdminCRM() {
   const exportToPDF = () => {
     const doc = new jsPDF('l', 'mm', 'a4');
     doc.setFontSize(16);
-    const title = activeTab === 'Commandes' ? 'Commandes Externes' : activeTab === 'Commandes à traiter' ? 'Commandes à Traiter' : 'Liste des Commandes';
+    const title = activeTab === 'Commandes' ? 'Commandes Externes' : activeTab === 'Commandes traitées' ? 'Commandes Traitées' : 'Liste des Commandes';
     doc.text(title, 14, 15);
     
-    const dataToExport = activeTab === 'Commandes' ? filteredOrders : activeTab === 'Commandes à traiter' ? pendingOrders : orders;
+    const dataToExport = activeTab === 'Commandes' ? filteredOrders : activeTab === 'Commandes traitées' ? pendingOrders : orders;
     const tableColumn = ['ID', 'Client', 'Téléphone', 'Adresse', 'Produit', 'Quantité', 'Prix', 'Logistique'];
     const tableRows = dataToExport.map(order => [
       order.id,
@@ -1003,10 +1003,10 @@ function AdminCRM() {
             )}
           </div>
         )}
-        {activeTab === 'Commandes à traiter' && (
+        {activeTab === 'Commandes traitées' && (
           <div style={{maxWidth: 1100, margin: '0 auto', textAlign:'left', background:'#fff', borderRadius:16, boxShadow:'0 2px 12px rgba(0,0,0,0.07)', padding:'32px 28px 24px 28px', border:'1.5px solid #e0e0e0'}}>
             <h2 style={{fontWeight:900, fontSize:'2rem', marginBottom:24, letterSpacing:1, display:'flex', alignItems:'center', gap:8}}>
-              <span role="img" aria-label="orders">📋</span> Commandes à traiter
+              <span role="img" aria-label="orders">📋</span> Commandes traitées
             </h2>
             <p style={{color:'#666', marginBottom:24}}>Commandes validées par les opérateurs en attente de traitement</p>
             
