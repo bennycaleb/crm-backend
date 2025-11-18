@@ -12,6 +12,7 @@ import AdminShopifyOrders from './AdminShopifyOrders';
 import AdminExternalOrders from './components/AdminExternalOrders';
 import { API_URL } from './apiConfig';
 import AdminUsers from './components/AdminUsers';
+import OperatorsStats from './components/OperatorsStats';
 
 const tabs = [
   { label: 'Statistiques' },
@@ -19,6 +20,7 @@ const tabs = [
   { label: 'Commandes traitées' },
   { label: 'Recherché' },
   { label: 'Vendeurs' },
+  { label: 'Statistiques Opérateurs' }, // Nouvel onglet pour les stats d'opérateurs
   { label: 'Demandes d\'inscription' },
   { label: 'Utilisateurs' } // Ajout de l'onglet Utilisateurs
 ];
@@ -122,9 +124,9 @@ function AdminCRM() {
     }
     fetchOrders();
 
-    // Rafraîchissement automatique désactivé pour éviter que les suppressions soient annulées
-    // const interval = setInterval(fetchOrders, 30000);
-    // return () => clearInterval(interval);
+    // Rafraîchissement automatique toutes les 30 secondes pour voir les nouvelles commandes
+    const interval = setInterval(fetchOrders, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   // Charger les demandes d'inscription
@@ -1304,7 +1306,7 @@ function AdminCRM() {
                         <td style={{padding:'10px 8px'}}>{order.produit} {order.quantite>1?`(x${order.quantite})`:''}</td>
                         <td style={{padding:'10px 8px', textAlign:'right'}}>{order.prix*order.quantite} €</td>
                         <td style={{padding:'10px 8px'}}>
-                          <span style={{padding:'4px 8px', borderRadius:12, fontWeight:600, background: order.statut==='Livrée'?'#e8f5e9':order.statut==='Annulée'?'#ffebee':order.statut==='En attente'?'#fff3e0':order.statut==='Litige'?'#ffecb3':'#e3f2fd', color: order.statut==='Livrée'?'#2e7d32':order.statut==='Annulée'?'#c62828':order.statut==='En attente'?'#e65100':order.statut==='Litige'?'#ff9800':'#1565c0'}}>{order.statut}</span>
+                          <span style={{padding:'4px 8px', borderRadius:12, fontWeight:600, background: order.statut==='Livrée'?'#e8f5e9':order.statut==='Annulée'?'#ffebee':order.statut==='En attente'?'#fff3e0':order.statut==='external_pending'?'#fff9c4':order.statut==='Litige'?'#ffecb3':'#e3f2fd', color: order.statut==='Livrée'?'#2e7d32':order.statut==='Annulée'?'#c62828':order.statut==='En attente'?'#e65100':order.statut==='external_pending'?'#f57f17':order.statut==='Litige'?'#ff9800':'#1565c0'}}>{order.statut === 'external_pending' ? 'En attente (Landing Page)' : order.statut}</span>
                         </td>
                         <td style={{padding:'10px 8px'}}>{order.operateur || '—'}</td>
                         <td style={{padding:'10px 8px'}}>
@@ -1378,6 +1380,7 @@ function AdminCRM() {
           </div>
         )}
         {activeTab === 'Utilisateurs' && <AdminUsers />}
+        {activeTab === 'Statistiques Opérateurs' && <OperatorsStats />}
       </div>
     </div>
   );
