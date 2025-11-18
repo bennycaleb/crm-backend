@@ -29,6 +29,7 @@ router.get('/', async (req, res) => {
         nom,
         prenom,
         phone: order.clientPhone,
+        email: order.email || '',
         adresse: order.address || '',
         produit: order.products && order.products[0] ? order.products[0].name : '',
         quantite: order.products && order.products[0] ? order.products[0].quantity : 1,
@@ -252,6 +253,13 @@ router.post('/external', async (req, res) => {
       // Format simple avec juste le nom du produit
       formattedProducts = [{
         name: product,
+        quantity: 1,
+        price: 0
+      }];
+    } else {
+      // Si aucun produit n'est fourni, créer un produit par défaut pour les commandes de landing page
+      formattedProducts = [{
+        name: 'Demande de contact - Landing Page',
         quantity: 1,
         price: 0
       }];
