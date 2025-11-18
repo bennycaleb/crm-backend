@@ -32,7 +32,8 @@ const io = socketIo(server, {
       'https://crm-backend-j.onrender.com',
       'https://crm-backend-nwl9.onrender.com',
       'https://beamish-ganache-de6579.netlify.app',
-      'https://sweetbodyshop.fr'
+      'https://sweetbodyshop.fr',
+      'https://candid-travesseiro-2c1c38.netlify.app'
     ],
     methods: ["GET", "POST"],
     credentials: true
@@ -75,10 +76,14 @@ app.use(cors({
     if (isAllowed) {
       callback(null, true);
     } else {
-      // Pour le développement, autoriser temporairement tous les domaines
-      // TODO: Restreindre aux domaines spécifiques en production
-      console.log('⚠️ Origin non listé mais autorisé temporairement:', origin);
-      callback(null, true);
+      // Autoriser aussi tous les domaines Netlify pour les landing pages
+      if (origin && origin.includes('.netlify.app')) {
+        console.log('✅ Origin Netlify autorisé:', origin);
+        callback(null, true);
+      } else {
+        console.log('🚫 Origin bloqué:', origin);
+        callback(new Error('Not allowed by CORS'));
+      }
     }
   },
   credentials: true,
