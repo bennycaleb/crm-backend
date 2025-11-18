@@ -61,11 +61,23 @@ app.use(cors({
       'https://sweetbodyshop.fr'
     ];
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // Autoriser tous les domaines pour les requêtes depuis les landing pages
+    // (vous pouvez restreindre cela plus tard si nécessaire)
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (allowed.includes('*')) {
+        const pattern = allowed.replace('*', '.*');
+        return new RegExp(pattern).test(origin);
+      }
+      return allowed === origin;
+    });
+    
+    if (isAllowed) {
       callback(null, true);
     } else {
-      console.log('🚫 Origin bloqué:', origin);
-      callback(new Error('Not allowed by CORS'));
+      // Pour le développement, autoriser temporairement tous les domaines
+      // TODO: Restreindre aux domaines spécifiques en production
+      console.log('⚠️ Origin non listé mais autorisé temporairement:', origin);
+      callback(null, true);
     }
   },
   credentials: true,
