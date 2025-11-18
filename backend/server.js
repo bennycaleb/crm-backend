@@ -58,7 +58,8 @@ app.use(cors({
       'https://crm-backend-j.onrender.com',
       'https://crm-backend-nwl9.onrender.com',
       'https://beamish-ganache-de6579.netlify.app',
-      'https://sweetbodyshop.fr'
+      'https://sweetbodyshop.fr',
+      'https://candid-travesseiro-2c1c38.netlify.app'
     ];
     
     // Autoriser tous les domaines pour les requêtes depuis les landing pages
