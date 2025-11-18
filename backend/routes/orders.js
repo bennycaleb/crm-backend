@@ -261,6 +261,7 @@ router.post('/external', async (req, res) => {
     const orderData = {
       clientName: finalName,
       clientPhone: finalPhone,
+      email: finalEmail || '',
       products: formattedProducts,
       totalAmount: parseFloat(total_amount) || 0,
       status: 'external_pending', // Statut spécial pour les commandes externes - v2
