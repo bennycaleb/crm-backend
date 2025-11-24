@@ -8,6 +8,10 @@ const AdminExternalOrders = () => {
 
   useEffect(() => {
     fetchOrders();
+    
+    // Rafraîchissement automatique toutes les 30 secondes pour voir les nouvelles commandes
+    const interval = setInterval(fetchOrders, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchOrders = async () => {
