@@ -18,6 +18,7 @@ const tabs = [
   { label: 'Statistiques' },
   { label: 'Commandes' },
   { label: 'Commandes traitées' },
+  { label: 'Commandes Landing Page' }, // Nouvel onglet pour les commandes des landing pages
   { label: 'Recherché' },
   { label: 'Vendeurs' },
   { label: 'Statistiques Opérateurs' }, // Nouvel onglet pour les stats d'opérateurs
@@ -1379,6 +1380,7 @@ function AdminCRM() {
             )}
           </div>
         )}
+        {activeTab === 'Commandes Landing Page' && <AdminExternalOrders />}
         {activeTab === 'Utilisateurs' && <AdminUsers />}
         {activeTab === 'Statistiques Opérateurs' && <OperatorsStats />}
       </div>

@@ -112,16 +112,17 @@ const AdminExternalOrders = () => {
       <div className="bg-white shadow overflow-hidden sm:rounded-md">
         <div className="px-4 py-5 sm:px-6">
           <h3 className="text-lg leading-6 font-medium text-gray-900">
-            Commandes externes à traiter
+            📱 Commandes Landing Page
           </h3>
           <p className="mt-1 max-w-2xl text-sm text-gray-500">
-            Commandes reçues depuis les sites partenaires en attente de traitement
+            Commandes reçues depuis vos landing pages. Les clients ont rempli le formulaire et attendent votre appel.
           </p>
         </div>
         
         {orders.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-500">Aucune commande externe en attente</p>
+            <p className="text-gray-500">Aucune commande de landing page en attente</p>
+            <p className="text-sm text-gray-400 mt-2">Les nouvelles commandes apparaîtront ici automatiquement</p>
           </div>
         ) : (
           <ul className="divide-y divide-gray-200">
@@ -134,30 +135,63 @@ const AdminExternalOrders = () => {
                         <h3 className="text-lg font-medium text-gray-900">
                           Commande #{order._id.slice(-6)}
                         </h3>
-                        <p className="text-sm text-gray-500">
-                          Client: {order.clientName} - {order.clientPhone}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Source: {order.channel || 'Externe'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Date: {formatDate(order.createdAt)}
-                        </p>
-                        <div className="mt-2">
-                          <p className="text-sm font-medium text-gray-900">
-                            Produits:
-                          </p>
-                          <ul className="mt-1 space-y-1">
-                            {order.products.map((product, index) => (
-                              <li key={index} className="text-sm text-gray-600">
-                                • {product.name} - Quantité: {product.quantity} - Prix: {product.price}€
-                              </li>
-                            ))}
-                          </ul>
+                        <div className="grid grid-cols-2 gap-4 mt-2">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Client:</p>
+                            <p className="text-sm text-gray-600">{order.clientName}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Téléphone:</p>
+                            <p className="text-sm text-gray-600">{order.clientPhone}</p>
+                          </div>
+                          {order.email && (
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">Email:</p>
+                              <p className="text-sm text-gray-600">{order.email}</p>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Source:</p>
+                            <p className="text-sm text-gray-600">{order.channel || 'Landing Page'}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Date:</p>
+                            <p className="text-sm text-gray-600">{formatDate(order.createdAt)}</p>
+                          </div>
+                          {order.address && (
+                            <div className="col-span-2">
+                              <p className="text-sm font-medium text-gray-900">Adresse:</p>
+                              <p className="text-sm text-gray-600">{order.address}</p>
+                            </div>
+                          )}
                         </div>
-                        <p className="text-sm font-medium text-gray-900 mt-2">
-                          Total: {order.totalAmount}€
-                        </p>
+                        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                          <p className="text-sm font-bold text-gray-900 mb-2">
+                            📦 Produit(s) demandé(s):
+                          </p>
+                          <ul className="space-y-2">
+                            {order.products && order.products.length > 0 ? (
+                              order.products.map((product, index) => (
+                                <li key={index} className="text-sm bg-white p-2 rounded border border-gray-200">
+                                  <span className="font-semibold text-gray-900">{product.name || 'Produit non spécifié'}</span>
+                                  {product.quantity > 0 && (
+                                    <span className="text-gray-600 ml-2">× {product.quantity}</span>
+                                  )}
+                                  {product.price > 0 && (
+                                    <span className="text-gray-600 ml-2">- {product.price}€</span>
+                                  )}
+                                </li>
+                              ))
+                            ) : (
+                              <li className="text-sm text-gray-500 italic">Aucun produit spécifié</li>
+                            )}
+                          </ul>
+                          {order.totalAmount > 0 && (
+                            <p className="text-sm font-bold text-gray-900 mt-3 pt-2 border-t border-gray-300">
+                              Total: {order.totalAmount}€
+                            </p>
+                          )}
+                        </div>
                       </div>
                       
                       <div className="flex flex-col items-end space-y-2">
