@@ -268,14 +268,16 @@ const AdminExternalOrders = () => {
           </div>
         ) : (
           <ul className="divide-y divide-gray-200">
-            {orders.map((order) => (
-              <li key={order._id} className="px-6 py-4">
+            {orders.map((order) => {
+              const orderId = order._id || order.id;
+              return (
+              <li key={orderId} className="px-6 py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-lg font-medium text-gray-900">
-                          Commande #{order._id.slice(-6)}
+                          Commande #{orderId ? orderId.slice(-6) : 'N/A'}
                         </h3>
                         <div className="grid grid-cols-2 gap-4 mt-2">
                           <div>
@@ -346,8 +348,8 @@ const AdminExternalOrders = () => {
                             <button
                               onClick={() => {
                                 const operator = prompt('Entrez le nom de l\'opérateur:');
-                                if (operator) {
-                                  assignToOperator(order._id, operator);
+                                if (operator && orderId) {
+                                  assignToOperator(orderId, operator);
                                 }
                               }}
                               className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
@@ -355,13 +357,23 @@ const AdminExternalOrders = () => {
                               Assigner
                             </button>
                             <button
-                              onClick={() => rejectOrder(order._id)}
+                              onClick={() => {
+                                if (orderId) {
+                                  rejectOrder(orderId);
+                                }
+                              }}
                               className="px-3 py-1 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors text-sm"
                             >
                               Refuser
                             </button>
                             <button
-                              onClick={() => deleteOrder(order._id || order.id)}
+                              onClick={() => {
+                                if (orderId) {
+                                  deleteOrder(orderId);
+                                } else {
+                                  alert('Erreur : ID de commande introuvable');
+                                }
+                              }}
                               className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
                             >
                               Supprimer
@@ -373,7 +385,8 @@ const AdminExternalOrders = () => {
                   </div>
                 </div>
               </li>
-            ))}
+            );
+            })}
           </ul>
         )}
       </div>
