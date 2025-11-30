@@ -14,6 +14,8 @@ const socketIo = require('socket.io');
 const usersRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
 const recallsRoutes = require('./routes/recalls');
+const ringoverRoutes = require('./routes/ringover');
+const channelsRoutes = require('./routes/channels');
 
 const app = express();
 const server = http.createServer(app);
@@ -195,6 +197,8 @@ app.use('/api', glnetRoutes);
 app.use('/api', usersRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/recalls', recallsRoutes);
+app.use('/api/ringover', ringoverRoutes);
+app.use('/api/channels', channelsRoutes);
 
 // Socket.IO pour les communications en temps réel
 io.on('connection', (socket) => {

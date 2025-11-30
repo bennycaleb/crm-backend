@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
+const Channel = require('../models/Channel');
 
 // GET /api/orders - Récupérer toutes les commandes
 router.get('/', async (req, res) => {
@@ -289,13 +290,39 @@ router.post('/external', async (req, res) => {
     const order = new Order(orderData);
     const savedOrder = await order.save();
     
+    // Assigner automatiquement la commande au canal correspondant au produit
+    if (formattedProducts.length > 0) {
+      const productName = formattedProducts[0].name;
+      
+      // Chercher le canal correspondant au produit
+      const matchingChannel = await Channel.findOne({
+        productName: { $regex: productName, $options: 'i' },
+        isActive: true
+      });
+      
+      if (matchingChannel) {
+        savedOrder.assignedChannel = matchingChannel._id;
+        await savedOrder.save();
+        
+        // Mettre à jour les statistiques du canal
+        matchingChannel.stats.totalOrders += 1;
+        matchingChannel.stats.pendingOrders += 1;
+        await matchingChannel.save();
+        
+        console.log(`✅ Commande assignée au canal: ${matchingChannel.name}`);
+      } else {
+        console.log(`⚠️ Aucun canal trouvé pour le produit: ${productName}`);
+      }
+    }
+    
     console.log('Commande externe sauvegardée:', savedOrder);
     
     res.status(201).json({
       success: true,
       message: 'Commande reçue et enregistrée avec succès',
       order_id: savedOrder._id,
-      status: 'pending'
+      status: 'pending',
+      channel: savedOrder.assignedChannel || null
     });
   } catch (error) {
     console.error('Erreur lors de la création de la commande externe:', error);

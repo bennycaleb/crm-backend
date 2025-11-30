@@ -56,6 +56,11 @@ const orderSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  assignedChannel: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Channel',
+    default: null
+  },
   history: [{
     date: String,
     action: String,

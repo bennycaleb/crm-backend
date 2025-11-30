@@ -10,6 +10,8 @@ import 'antd/dist/reset.css';
 import moment from 'moment';
 import AdminShopifyOrders from './AdminShopifyOrders';
 import AdminExternalOrders from './components/AdminExternalOrders';
+import AdminRingoverCalls from './components/AdminRingoverCalls';
+import AdminChannels from './components/AdminChannels';
 import { API_URL } from './apiConfig';
 import AdminUsers from './components/AdminUsers';
 import OperatorsStats from './components/OperatorsStats';
@@ -19,6 +21,8 @@ const tabs = [
   { label: 'Commandes' },
   { label: 'Commandes traitées' },
   { label: 'Commandes Landing Page' }, // Nouvel onglet pour les commandes des landing pages
+  { label: 'Appels Ringover' }, // Nouvel onglet pour les appels Ringover
+  { label: 'Canaux' }, // Nouvel onglet pour la gestion des canaux
   { label: 'Recherché' },
   { label: 'Vendeurs' },
   { label: 'Statistiques Opérateurs' }, // Nouvel onglet pour les stats d'opérateurs
@@ -1381,6 +1385,8 @@ function AdminCRM() {
           </div>
         )}
         {activeTab === 'Commandes Landing Page' && <AdminExternalOrders />}
+        {activeTab === 'Appels Ringover' && <AdminRingoverCalls />}
+        {activeTab === 'Canaux' && <AdminChannels />}
         {activeTab === 'Utilisateurs' && <AdminUsers />}
         {activeTab === 'Statistiques Opérateurs' && <OperatorsStats />}
       </div>
