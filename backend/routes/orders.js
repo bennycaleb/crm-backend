@@ -128,13 +128,34 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { 
+      status, 
+      leadStatus, 
+      leadNotes, 
+      assignedOperator, 
+      lastCallAttempt,
+      history 
+    } = req.body;
+
+    const updateData = {};
+    if (status !== undefined) updateData.status = status;
+    if (leadStatus !== undefined) updateData.leadStatus = leadStatus;
+    if (leadNotes !== undefined) updateData.leadNotes = leadNotes;
+    if (assignedOperator !== undefined) updateData.assignedOperator = assignedOperator;
+    if (lastCallAttempt !== undefined) updateData.lastCallAttempt = lastCallAttempt ? new Date(lastCallAttempt) : null;
+    if (history && Array.isArray(history)) {
+      // Ajouter les nouvelles entrées d'historique
+      const order = await Order.findById(id);
+      if (order) {
+        updateData.history = [...(order.history || []), ...history];
+      }
+    }
 
     const order = await Order.findByIdAndUpdate(
       id,
-      { status },
+      updateData,
       { new: true }
-    );
+    ).populate('assignedChannel', 'name productName').populate('assignedOperator', 'username prenom nom');
 
     if (!order) {
       return res.status(404).json({ error: 'Commande non trouvée' });

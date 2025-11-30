@@ -61,6 +61,25 @@ const orderSchema = new mongoose.Schema({
     ref: 'Channel',
     default: null
   },
+  // Statut du lead pour les opérateurs
+  leadStatus: {
+    type: String,
+    enum: ['nouveau', 'en_appel', 'rappel', 'traité', 'refusé'],
+    default: 'nouveau'
+  },
+  assignedOperator: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  leadNotes: {
+    type: String,
+    default: ''
+  },
+  lastCallAttempt: {
+    type: Date,
+    default: null
+  },
   history: [{
     date: String,
     action: String,

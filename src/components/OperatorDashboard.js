@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import OperatorOrders from './OperatorOrders';
+import OperatorLeads from './OperatorLeads';
+import { API_URL } from '../apiConfig';
 
 function OperatorDashboard() {
   const [activeTab, setActiveTab] = useState('orders');
@@ -9,6 +11,7 @@ function OperatorDashboard() {
   const [showWelcome, setShowWelcome] = useState(true);
 
   const tabs = [
+    { id: 'leads', name: 'Mes Leads', component: <OperatorLeads /> },
     { id: 'orders', name: 'Commandes', component: <OperatorOrders /> },
     { id: 'dashboard', name: 'Tableau de bord', component: <div>Tableau de bord opérateur</div> }
   ];
@@ -23,7 +26,7 @@ function OperatorDashboard() {
 
   const fetchUserInfo = async (username) => {
     try {
-      const response = await fetch('/api/users');
+      const response = await fetch(`${API_URL}/api/users`);
       const users = await response.json();
       const user = users.find(u => u.username === username);
       if (user) {
@@ -36,13 +39,39 @@ function OperatorDashboard() {
     }
   };
 
+  // Fonction pour mettre à jour les statistiques
+  const updateStats = async (statType) => {
+    if (!currentUser) return;
+    
+    try {
+      const response = await fetch(`${API_URL}/api/users/${currentUser._id}/stats`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          statType: statType,
+          increment: 1
+        })
+      });
+
+      if (response.ok) {
+        console.log(`Statistique ${statType} mise à jour`);
+      } else {
+        console.error('Erreur lors de la mise à jour des statistiques');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour des statistiques:', error);
+    }
+  };
+
   const toggleConnection = async () => {
     if (!currentUser) return;
 
     const newStatus = isConnected ? 'Hors ligne' : 'Connecté';
     
     try {
-      const response = await fetch(`/api/users/${currentUser._id}`, {
+      const response = await fetch(`${API_URL}/api/users/${currentUser._id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -78,6 +107,55 @@ function OperatorDashboard() {
       case 'Formation': return 'bg-blue-500';
       default: return 'bg-gray-500';
     }
+  };
+
+  // Composant pour les actions d'appel (visible seulement quand connecté)
+  const CallActions = () => {
+    if (!isConnected) return null;
+
+    return (
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions d'Appel</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <button
+            onClick={() => updateStats('appelsRecus')}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Appel Reçu
+          </button>
+          <button
+            onClick={() => updateStats('appelsRejetes')}
+            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Appel Rejeté
+          </button>
+          <button
+            onClick={() => updateStats('rappels')}
+            className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Rappel
+          </button>
+          <button
+            onClick={() => updateStats('sansReponse')}
+            className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Sans Réponse
+          </button>
+          <button
+            onClick={() => updateStats('poubelle')}
+            className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Poubelle
+          </button>
+          <button
+            onClick={() => updateStats('validations')}
+            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Validation
+          </button>
+        </div>
+      </div>
+    );
   };
 
   if (showWelcome) {
@@ -142,6 +220,7 @@ function OperatorDashboard() {
 
           {/* Contenu des onglets */}
           <div className="mt-6">
+            <CallActions />
             {tabs.find(tab => tab.id === activeTab)?.component}
           </div>
         </div>
