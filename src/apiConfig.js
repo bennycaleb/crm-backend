@@ -1,1 +1,1 @@
-export const API_URL = 'https://crm-backend-nwl9.onrender.com'; 
+export const API_URL = process.env.REACT_APP_API_URL || 'https://crm-backend-nwl9.onrender.com'; 
