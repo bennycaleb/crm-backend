@@ -15,6 +15,10 @@ const OperatorLeads = () => {
     fetchLeads();
     
     // Rafraîchissement automatique toutes les 10 secondes
+    // Cela signifie que la liste des leads se met à jour automatiquement
+    // pour afficher les nouveaux leads sans avoir à cliquer sur "Actualiser"
+    // Exemple : Si un nouveau client remplit le formulaire sur la landing page,
+    // son lead apparaîtra automatiquement dans cette liste après maximum 10 secondes
     const interval = setInterval(fetchLeads, 10000);
     return () => clearInterval(interval);
   }, [filterStatus]);
@@ -68,34 +72,38 @@ const OperatorLeads = () => {
     setSelectedLead(lead);
     
     // Ouvrir Ringover pour appeler (Option A)
-    const phoneNumber = lead.clientPhone.replace(/\D/g, ''); // Nettoyer le numéro
+    const phoneNumber = lead.clientPhone.replace(/\D/g, ''); // Nettoyer le numéro (enlève tout sauf les chiffres)
     
-    // Essayer plusieurs méthodes pour ouvrir Ringover
-    // Méthode 1: Lien tel: (ouvre l'app téléphone par défaut)
-    const telUrl = `tel:${phoneNumber}`;
+    // Format du numéro pour Ringover : +33XXXXXXXXX (ajouter l'indicatif si nécessaire)
+    let formattedNumber = phoneNumber;
+    if (phoneNumber.startsWith('0')) {
+      // Si le numéro commence par 0, remplacer par +33
+      formattedNumber = '+33' + phoneNumber.substring(1);
+    } else if (!phoneNumber.startsWith('+')) {
+      // Si pas d'indicatif, ajouter +33
+      formattedNumber = '+33' + phoneNumber;
+    }
     
-    // Méthode 2: Essayer d'ouvrir Ringover directement (si installé)
-    // Ringover utilise souvent des URLs comme ringover://call/+33...
-    const ringoverUrl = `ringover://call/${phoneNumber}`;
+    // Ouvrir Ringover directement avec le protocole ringover://
+    // Ringover utilise le format : ringover://call/+33XXXXXXXXX
+    const ringoverUrl = `ringover://call/${formattedNumber}`;
     
-    // Essayer d'abord Ringover, puis fallback sur tel:
+    // Essayer d'ouvrir Ringover directement
     try {
-      // Créer un lien invisible pour tester Ringover
+      // Créer un lien pour ouvrir Ringover
       const link = document.createElement('a');
       link.href = ringoverUrl;
+      link.target = '_blank';
       link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
-      // Si Ringover n'est pas installé, le navigateur peut ne rien faire
-      // Dans ce cas, on utilise tel: après un court délai
-      setTimeout(() => {
-        window.location.href = telUrl;
-      }, 500);
+      console.log('✅ Tentative d\'ouverture de Ringover avec:', ringoverUrl);
     } catch (e) {
-      // Fallback sur tel:
-      window.location.href = telUrl;
+      console.error('❌ Erreur lors de l\'ouverture de Ringover:', e);
+      // Si Ringover n'est pas installé, afficher le numéro pour que l'opérateur puisse le copier
+      alert(`Numéro à appeler: ${formattedNumber}\n\nSi Ringover ne s'ouvre pas, copiez ce numéro et appelez depuis Ringover.`);
     }
     
     // Mettre à jour le statut du lead
