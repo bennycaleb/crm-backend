@@ -465,7 +465,7 @@ function CRM() {
             )}
           </div>
         )}
-        {activeTab === 'Commandes' ? (
+        {activeTab === 'Commandes' && (
           <div style={{maxWidth: 950, margin: '0 auto', textAlign:'left', background:'#fff', borderRadius:16, boxShadow:'0 2px 12px rgba(0,0,0,0.07)', padding:'32px 28px 24px 28px', border:'1.5px solid #e0e0e0'}}>
             <h2 style={{fontWeight:800, fontSize:'1.6rem', marginBottom:32, textAlign:'center', letterSpacing:1}}>Mes commandes</h2>
             {apiError && (
@@ -546,7 +546,8 @@ function CRM() {
               </table>
             </div>
           </div>
-        ) : (
+        )}
+        {activeTab === 'Principal' && (
           <>
             {/* Colonne de gauche */}
             <div style={{minWidth: 320, maxWidth: 340, marginRight: 32}}>
