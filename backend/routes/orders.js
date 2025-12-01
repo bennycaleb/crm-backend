@@ -311,29 +311,68 @@ router.post('/external', async (req, res) => {
     const order = new Order(orderData);
     const savedOrder = await order.save();
     
-    // Assigner automatiquement la commande au canal correspondant au produit
-    if (formattedProducts.length > 0) {
+    // Assigner automatiquement la commande au canal correspondant
+    // Méthode 1: Chercher par source (ex: landing-page-mrbigcream -> MR BIG)
+    let matchingChannel = null;
+    
+    if (source && source.includes('landing-page-')) {
+      // Extraire le nom du produit depuis le source (ex: landing-page-mrbigcream -> mrbigcream)
+      const sourceProduct = source.replace('landing-page-', '').replace(/-/g, ' ');
+      
+      // Normaliser pour la recherche (enlever les espaces, mettre en minuscules)
+      const normalizedSource = sourceProduct.replace(/\s+/g, '').toLowerCase();
+      
+      // Chercher tous les canaux actifs
+      const allChannels = await Channel.find({ isActive: true });
+      
+      // Chercher le canal dont le nom ou productName correspond (insensible à la casse)
+      for (const channel of allChannels) {
+        const normalizedChannelName = channel.name.replace(/\s+/g, '').toLowerCase();
+        const normalizedProductName = channel.productName.replace(/\s+/g, '').toLowerCase();
+        
+        if (normalizedChannelName.includes(normalizedSource) || 
+            normalizedProductName.includes(normalizedSource) ||
+            normalizedSource.includes(normalizedChannelName) ||
+            normalizedSource.includes(normalizedProductName)) {
+          matchingChannel = channel;
+          console.log(`✅ Canal trouvé par source: ${source} -> ${channel.name}`);
+          break;
+        }
+      }
+    }
+    
+    // Méthode 2: Si pas trouvé par source, chercher par nom du produit
+    if (!matchingChannel && formattedProducts.length > 0) {
       const productName = formattedProducts[0].name;
       
       // Chercher le canal correspondant au produit
-      const matchingChannel = await Channel.findOne({
-        productName: { $regex: productName, $options: 'i' },
+      matchingChannel = await Channel.findOne({
+        $or: [
+          { productName: { $regex: productName, $options: 'i' } },
+          { name: { $regex: productName, $options: 'i' } }
+        ],
         isActive: true
       });
       
       if (matchingChannel) {
-        savedOrder.assignedChannel = matchingChannel._id;
-        await savedOrder.save();
-        
-        // Mettre à jour les statistiques du canal
-        matchingChannel.stats.totalOrders += 1;
-        matchingChannel.stats.pendingOrders += 1;
-        await matchingChannel.save();
-        
-        console.log(`✅ Commande assignée au canal: ${matchingChannel.name}`);
-      } else {
-        console.log(`⚠️ Aucun canal trouvé pour le produit: ${productName}`);
+        console.log(`✅ Canal trouvé par produit: ${productName} -> ${matchingChannel.name}`);
       }
+    }
+    
+    // Assigner le canal si trouvé
+    if (matchingChannel) {
+      savedOrder.assignedChannel = matchingChannel._id;
+      await savedOrder.save();
+      
+      // Mettre à jour les statistiques du canal
+      matchingChannel.stats.totalOrders += 1;
+      matchingChannel.stats.pendingOrders += 1;
+      await matchingChannel.save();
+      
+      console.log(`✅ Commande ${savedOrder._id} assignée au canal: ${matchingChannel.name}`);
+    } else {
+      console.log(`⚠️ Aucun canal trouvé pour source: ${source}, produit: ${formattedProducts[0]?.name || 'N/A'}`);
+      console.log(`🔍 Canaux disponibles:`, await Channel.find({ isActive: true }).select('name productName'));
     }
     
     console.log('Commande externe sauvegardée:', savedOrder);
@@ -350,6 +389,76 @@ router.post('/external', async (req, res) => {
     res.status(500).json({ 
       error: 'Erreur serveur lors de la création de la commande',
       details: error.message 
+    });
+  }
+});
+
+// POST /api/orders/reassign-channels - Réassigner les commandes existantes aux canaux
+router.post('/reassign-channels', async (req, res) => {
+  try {
+    // Récupérer toutes les commandes externes sans canal assigné
+    const ordersWithoutChannel = await Order.find({
+      status: 'external_pending',
+      assignedChannel: null
+    });
+
+    let reassigned = 0;
+    let notFound = 0;
+
+    for (const order of ordersWithoutChannel) {
+      let matchingChannel = null;
+      const source = order.channel || '';
+
+      // Chercher par source
+      if (source && source.includes('landing-page-')) {
+        const sourceProduct = source.replace('landing-page-', '').replace(/-/g, ' ');
+        const normalizedSource = sourceProduct.replace(/\s+/g, '').toLowerCase();
+
+        const allChannels = await Channel.find({ isActive: true });
+        
+        for (const channel of allChannels) {
+          const normalizedChannelName = channel.name.replace(/\s+/g, '').toLowerCase();
+          const normalizedProductName = channel.productName.replace(/\s+/g, '').toLowerCase();
+
+          if (normalizedChannelName.includes(normalizedSource) || 
+              normalizedProductName.includes(normalizedSource) ||
+              normalizedSource.includes(normalizedChannelName) ||
+              normalizedSource.includes(normalizedProductName)) {
+            matchingChannel = channel;
+            break;
+          }
+        }
+      }
+
+      // Si trouvé, assigner
+      if (matchingChannel) {
+        order.assignedChannel = matchingChannel._id;
+        await order.save();
+
+        matchingChannel.stats.totalOrders += 1;
+        matchingChannel.stats.pendingOrders += 1;
+        await matchingChannel.save();
+
+        reassigned++;
+        console.log(`✅ Commande ${order._id} réassignée au canal: ${matchingChannel.name}`);
+      } else {
+        notFound++;
+        console.log(`⚠️ Aucun canal trouvé pour commande ${order._id}, source: ${source}`);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Réassignation terminée`,
+      reassigned,
+      notFound,
+      total: ordersWithoutChannel.length
+    });
+  } catch (error) {
+    console.error('❌ Erreur lors de la réassignation:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
     });
   }
 });
