@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { API_URL } from './apiConfig';
 import { useNavigate } from 'react-router-dom';
+import OperatorLeads from './components/OperatorLeads';
 import './CRM.css';
 
 const statusList = [
@@ -20,6 +21,7 @@ const callStatusList = [
 
 const tabs = [
   'Principal',
+  'Mes Leads',
   'Rappel',
   'Commandes'
 ];
@@ -436,6 +438,11 @@ function CRM() {
         <span className="crm-brand-main">C-<span className="crm-brand-accent">INNOVATECH</span> Solutions</span>
       </div>
       <div className="crm-legacy-content">
+        {activeTab === 'Mes Leads' && (
+          <div style={{maxWidth: 1200, margin: '0 auto', padding: '20px'}}>
+            <OperatorLeads />
+          </div>
+        )}
         {activeTab === 'Rappel' && (
           <div className="recall-block" style={{margin:'48px auto 0 auto',maxWidth:420}}>
             <h2 style={{fontWeight:700, fontSize:'1.3rem', marginBottom:18}}>Rappels à effectuer</h2>

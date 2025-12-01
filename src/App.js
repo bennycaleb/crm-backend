@@ -17,8 +17,7 @@ function App() {
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/operateur-bienvenue" element={<OperatorWelcome />} />
-          <Route path="/operateur" element={<OperatorDashboard />} />
-          <Route path="/operateur-legacy" element={<CRM />} />
+          <Route path="/operateur" element={<CRM />} />
           <Route path="/admin" element={<AdminCRM />} />
           <Route path="/admin/shopify-orders" element={<AdminShopifyOrders />} />
         </Routes>
