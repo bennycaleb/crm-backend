@@ -11,8 +11,14 @@ const OperatorLeads = () => {
   const [filterStatus, setFilterStatus] = useState('nouveau');
 
   useEffect(() => {
-    fetchUserInfo();
-    fetchLeads();
+    const init = async () => {
+      await fetchUserInfo();
+      // Attendre un peu pour que currentUser soit mis à jour
+      setTimeout(() => {
+        fetchLeads();
+      }, 500);
+    };
+    init();
     
     // Rafraîchissement automatique toutes les 10 secondes
     // Cela signifie que la liste des leads se met à jour automatiquement
@@ -22,6 +28,13 @@ const OperatorLeads = () => {
     const interval = setInterval(fetchLeads, 10000);
     return () => clearInterval(interval);
   }, [filterStatus]);
+
+  // Réessayer de charger les leads quand currentUser change
+  useEffect(() => {
+    if (currentUser?._id) {
+      fetchLeads();
+    }
+  }, [currentUser?._id]);
 
   const fetchUserInfo = async () => {
     try {
@@ -41,26 +54,45 @@ const OperatorLeads = () => {
 
   const fetchLeads = async () => {
     try {
+      // Si pas d'utilisateur, essayer de le récupérer
       if (!currentUser?._id) {
         await fetchUserInfo();
+        // Attendre un peu et réessayer
+        setTimeout(() => {
+          if (currentUser?._id) {
+            fetchLeads();
+          }
+        }, 500);
         return;
       }
 
       setLoading(true);
+      console.log('🔍 Récupération des leads pour opérateur:', currentUser._id);
+      
       const response = await fetch(`${API_URL}/api/channels/operator/${currentUser._id}/orders?status=external_pending`);
+      
       if (!response.ok) {
-        throw new Error('Erreur lors du chargement des leads');
+        const errorText = await response.text();
+        console.error('❌ Erreur API:', response.status, errorText);
+        throw new Error(`Erreur ${response.status}: ${errorText}`);
       }
+      
       const result = await response.json();
+      console.log('📥 Réponse API:', result);
       
       // Filtrer selon le statut
       let filteredLeads = result.data || [];
+      console.log('📊 Leads avant filtre:', filteredLeads.length);
+      
       if (filterStatus !== 'tous') {
         filteredLeads = filteredLeads.filter(lead => lead.leadStatus === filterStatus);
+        console.log('📊 Leads après filtre:', filteredLeads.length);
       }
       
       setLeads(filteredLeads);
+      setError(null);
     } catch (err) {
+      console.error('❌ Erreur fetchLeads:', err);
       setError(err.message);
     } finally {
       setLoading(false);
