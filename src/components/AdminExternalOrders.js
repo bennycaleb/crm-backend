@@ -154,6 +154,33 @@ const AdminExternalOrders = () => {
   };
 
   // Fonction d'export PDF
+  const reassignToChannels = async () => {
+    if (!window.confirm('Voulez-vous réassigner toutes les commandes sans canal aux canaux correspondants ? Cette action peut prendre quelques secondes.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/orders/reassign-channels`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la réassignation');
+      }
+
+      const result = await response.json();
+      alert(`✅ Réassignation terminée !\n${result.reassigned} commande(s) réassignée(s)\n${result.notFound} commande(s) sans canal trouvé`);
+      
+      // Rafraîchir la liste
+      fetchOrders();
+    } catch (err) {
+      alert(`Erreur: ${err.message}`);
+    }
+  };
+
   const exportToPDF = () => {
     if (orders.length === 0) {
       alert('Aucune commande à exporter');
@@ -232,10 +259,10 @@ const AdminExternalOrders = () => {
         <div className="px-4 py-5 sm:px-6">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
+          <h3 className="text-lg leading-6 font-medium text-gray-900">
                 📱 Commandes Landing Page
-              </h3>
-              <p className="mt-1 max-w-2xl text-sm text-gray-500">
+          </h3>
+          <p className="mt-1 max-w-2xl text-sm text-gray-500">
                 Commandes reçues depuis vos landing pages. Les clients ont rempli le formulaire et attendent votre appel.
                 {orders.length > 0 && (
                   <span className="ml-2 font-semibold text-gray-700">({orders.length} commande{orders.length > 1 ? 's' : ''})</span>
@@ -244,6 +271,13 @@ const AdminExternalOrders = () => {
             </div>
             {orders.length > 0 && (
               <div className="flex space-x-2">
+                <button
+                  onClick={reassignToChannels}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium flex items-center"
+                  title="Réassigner les commandes aux canaux selon leur source"
+                >
+                  🔄 Réassigner aux canaux
+                </button>
                 <button
                   onClick={exportToExcel}
                   className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium flex items-center"
@@ -324,7 +358,7 @@ const AdminExternalOrders = () => {
                                   {product.price > 0 && (
                                     <span className="text-gray-600 ml-2">- {product.price}€</span>
                                   )}
-                                </li>
+                              </li>
                               ))
                             ) : (
                               <li className="text-sm text-gray-500 italic">Aucun produit spécifié</li>
@@ -344,28 +378,28 @@ const AdminExternalOrders = () => {
                         </span>
                         
                         <div className="flex flex-col space-y-2">
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => {
-                                const operator = prompt('Entrez le nom de l\'opérateur:');
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => {
+                              const operator = prompt('Entrez le nom de l\'opérateur:');
                                 if (operator && orderId) {
                                   assignToOperator(orderId, operator);
-                                }
-                              }}
-                              className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
-                            >
+                              }
+                            }}
+                            className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+                          >
                               Assigner
-                            </button>
-                            <button
+                          </button>
+                          <button
                               onClick={() => {
                                 if (orderId) {
                                   rejectOrder(orderId);
                                 }
                               }}
                               className="px-3 py-1 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors text-sm"
-                            >
-                              Refuser
-                            </button>
+                          >
+                            Refuser
+                          </button>
                             <button
                               onClick={() => {
                                 if (orderId) {
