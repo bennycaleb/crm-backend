@@ -4,7 +4,7 @@ import OperatorLeads from './OperatorLeads';
 import { API_URL } from '../apiConfig';
 
 function OperatorDashboard() {
-  const [activeTab, setActiveTab] = useState('orders');
+  const [activeTab, setActiveTab] = useState('leads'); // Par défaut, afficher "Mes Leads"
   const [operatorStatus, setOperatorStatus] = useState('Hors ligne');
   const [isConnected, setIsConnected] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
