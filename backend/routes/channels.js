@@ -298,6 +298,8 @@ router.get('/operator/:operatorId/orders', async (req, res) => {
   try {
     const { status } = req.query;
     
+    console.log(`🔍 Recherche des leads pour opérateur: ${req.params.operatorId}`);
+    
     // Récupérer les canaux de l'opérateur
     const channels = await Channel.find({
       'assignedOperators.operatorId': req.params.operatorId,
@@ -305,7 +307,19 @@ router.get('/operator/:operatorId/orders', async (req, res) => {
       isActive: true
     });
     
+    console.log(`📊 Canaux trouvés pour l'opérateur: ${channels.length}`, channels.map(c => ({ name: c.name, id: c._id })));
+    
     const channelIds = channels.map(ch => ch._id);
+    
+    if (channelIds.length === 0) {
+      console.log(`⚠️ Aucun canal assigné à l'opérateur ${req.params.operatorId}`);
+      return res.json({
+        success: true,
+        data: [],
+        total: 0,
+        message: 'Aucun canal assigné à cet opérateur'
+      });
+    }
     
     const filter = {
       assignedChannel: { $in: channelIds }
@@ -315,9 +329,13 @@ router.get('/operator/:operatorId/orders', async (req, res) => {
       filter.status = status;
     }
     
+    console.log(`🔍 Filtre de recherche:`, filter);
+    
     const orders = await Order.find(filter)
       .sort({ createdAt: -1 })
       .limit(100);
+    
+    console.log(`✅ Commandes trouvées: ${orders.length}`);
     
     res.json({
       success: true,
