@@ -103,10 +103,10 @@ const OperatorLeads = () => {
     // Afficher les infos du client dans l'interface
     setSelectedLead(lead);
     
-    // Ouvrir Ringover pour appeler (Option A)
-    const phoneNumber = lead.clientPhone.replace(/\D/g, ''); // Nettoyer le numéro (enlève tout sauf les chiffres)
+    // Nettoyer le numéro de téléphone
+    const phoneNumber = lead.clientPhone.replace(/\D/g, ''); // Enlève tout sauf les chiffres
     
-    // Format du numéro pour Ringover : +33XXXXXXXXX (ajouter l'indicatif si nécessaire)
+    // Format du numéro pour l'appel : +33XXXXXXXXX (ajouter l'indicatif si nécessaire)
     let formattedNumber = phoneNumber;
     if (phoneNumber.startsWith('0')) {
       // Si le numéro commence par 0, remplacer par +33
@@ -116,26 +116,43 @@ const OperatorLeads = () => {
       formattedNumber = '+33' + phoneNumber;
     }
     
-    // Ouvrir Ringover directement avec le protocole ringover://
-    // Ringover utilise le format : ringover://call/+33XXXXXXXXX
-    const ringoverUrl = `ringover://call/${formattedNumber}`;
+    // Sur mobile, utiliser tel: pour ouvrir l'app téléphone
+    // L'opérateur pourra ensuite utiliser Ringover depuis l'app téléphone
+    const telUrl = `tel:${formattedNumber}`;
     
-    // Essayer d'ouvrir Ringover directement
+    // Essayer d'abord d'ouvrir Ringover (si disponible sur desktop)
+    // Puis fallback sur tel: pour mobile
     try {
-      // Créer un lien pour ouvrir Ringover
-      const link = document.createElement('a');
-      link.href = ringoverUrl;
-      link.target = '_blank';
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Détecter si on est sur mobile
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       
-      console.log('✅ Tentative d\'ouverture de Ringover avec:', ringoverUrl);
+      if (isMobile) {
+        // Sur mobile, utiliser directement tel:
+        window.location.href = telUrl;
+        console.log('✅ Ouverture de l\'app téléphone avec:', telUrl);
+      } else {
+        // Sur desktop, essayer d'abord Ringover, puis fallback sur tel:
+        const ringoverUrl = `ringover://call/${formattedNumber}`;
+        
+        // Créer un lien invisible pour tester Ringover
+        const link = document.createElement('a');
+        link.href = ringoverUrl;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Si Ringover ne s'ouvre pas après 500ms, utiliser tel:
+        setTimeout(() => {
+          window.location.href = telUrl;
+        }, 500);
+        
+        console.log('✅ Tentative d\'ouverture de Ringover, fallback sur tel:');
+      }
     } catch (e) {
-      console.error('❌ Erreur lors de l\'ouverture de Ringover:', e);
-      // Si Ringover n'est pas installé, afficher le numéro pour que l'opérateur puisse le copier
-      alert(`Numéro à appeler: ${formattedNumber}\n\nSi Ringover ne s'ouvre pas, copiez ce numéro et appelez depuis Ringover.`);
+      console.error('❌ Erreur lors de l\'ouverture:', e);
+      // Fallback : utiliser tel:
+      window.location.href = telUrl;
     }
     
     // Mettre à jour le statut du lead
