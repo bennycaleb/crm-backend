@@ -39,37 +39,51 @@ const OperatorLeads = () => {
   const fetchUserInfo = async () => {
     try {
       const username = localStorage.getItem('username');
-      if (!username) return;
+      if (!username) {
+        console.warn('⚠️ Pas de username dans localStorage');
+        return;
+      }
       
+      console.log('🔍 Recherche utilisateur avec username:', username);
       const response = await fetch(`${API_URL}/api/users`);
       const users = await response.json();
+      console.log('📊 Utilisateurs récupérés:', users.length);
+      
       const user = users.find(u => u.username === username);
       if (user) {
+        console.log('✅ Utilisateur trouvé:', { id: user._id, username: user.username, role: user.role });
         setCurrentUser(user);
+        return user; // Retourner l'utilisateur pour utilisation immédiate
+      } else {
+        console.warn('⚠️ Utilisateur non trouvé avec username:', username);
       }
     } catch (err) {
-      console.error('Erreur récupération utilisateur:', err);
+      console.error('❌ Erreur récupération utilisateur:', err);
     }
+    return null;
   };
 
   const fetchLeads = async () => {
     try {
-      // Si pas d'utilisateur, essayer de le récupérer
-      if (!currentUser?._id) {
-        await fetchUserInfo();
-        // Attendre un peu et réessayer
-        setTimeout(() => {
-          if (currentUser?._id) {
-            fetchLeads();
-          }
-        }, 500);
-        return;
+      // Si pas d'utilisateur, essayer de le récupérer d'abord
+      let user = currentUser;
+      if (!user?._id) {
+        console.log('⏳ Utilisateur non chargé, récupération en cours...');
+        user = await fetchUserInfo();
+        if (!user?._id) {
+          console.warn('⚠️ Impossible de récupérer l\'utilisateur, nouvelle tentative dans 1 seconde...');
+          setTimeout(() => fetchLeads(), 1000);
+          return;
+        }
+        // Mettre à jour currentUser si on vient de le récupérer
+        setCurrentUser(user);
       }
 
       setLoading(true);
-      console.log('🔍 Récupération des leads pour opérateur:', currentUser._id);
+      console.log('🔍 Récupération des leads pour opérateur:', user._id);
+      console.log('🌐 URL:', `${API_URL}/api/channels/operator/${user._id}/orders?status=external_pending`);
       
-      const response = await fetch(`${API_URL}/api/channels/operator/${currentUser._id}/orders?status=external_pending`);
+      const response = await fetch(`${API_URL}/api/channels/operator/${user._id}/orders?status=external_pending`);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -78,7 +92,8 @@ const OperatorLeads = () => {
       }
       
       const result = await response.json();
-      console.log('📥 Réponse API:', result);
+      console.log('📥 Réponse API complète:', result);
+      console.log('📊 Nombre de leads reçus:', result.data?.length || 0);
       
       // Filtrer selon le statut
       let filteredLeads = result.data || [];
@@ -91,6 +106,10 @@ const OperatorLeads = () => {
       
       setLeads(filteredLeads);
       setError(null);
+      
+      if (filteredLeads.length === 0 && result.data?.length > 0) {
+        console.log('ℹ️ Des leads existent mais sont filtrés par le statut:', filterStatus);
+      }
     } catch (err) {
       console.error('❌ Erreur fetchLeads:', err);
       setError(err.message);
