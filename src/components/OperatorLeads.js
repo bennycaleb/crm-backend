@@ -99,7 +99,7 @@ const OperatorLeads = () => {
     }
   };
 
-  const handleCall = (lead) => {
+  const handleCall = async (lead) => {
     // Afficher les infos du client dans l'interface
     setSelectedLead(lead);
     
@@ -116,42 +116,67 @@ const OperatorLeads = () => {
       formattedNumber = '+33' + phoneNumber;
     }
     
-    // Sur mobile, utiliser tel: pour ouvrir l'app téléphone
-    // L'opérateur pourra ensuite utiliser Ringover depuis l'app téléphone
-    const telUrl = `tel:${formattedNumber}`;
+    // Essayer d'abord d'initier l'appel via l'API Ringover
+    try {
+      const response = await fetch(`${API_URL}/api/ringover/initiate-call`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumber: formattedNumber,
+          userId: currentUser?._id || null
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('✅ Appel initié via API Ringover');
+        // Mettre à jour le statut du lead
+        updateLeadStatus(lead._id, 'en_appel');
+        return;
+      } else {
+        console.warn('⚠️ Impossible d\'initier l\'appel via API, fallback sur protocole');
+      }
+    } catch (apiError) {
+      console.warn('⚠️ Erreur API Ringover, fallback sur protocole:', apiError);
+    }
     
-    // Essayer d'abord d'ouvrir Ringover (si disponible sur desktop)
-    // Puis fallback sur tel: pour mobile
+    // Fallback : Essayer d'ouvrir Ringover avec le protocole
     try {
       // Détecter si on est sur mobile
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       
       if (isMobile) {
-        // Sur mobile, utiliser directement tel:
-        window.location.href = telUrl;
-        console.log('✅ Ouverture de l\'app téléphone avec:', telUrl);
-      } else {
-        // Sur desktop, essayer d'abord Ringover, puis fallback sur tel:
+        // Sur mobile, essayer d'abord ringover://, puis fallback sur tel:
         const ringoverUrl = `ringover://call/${formattedNumber}`;
         
-        // Créer un lien invisible pour tester Ringover
-        const link = document.createElement('a');
-        link.href = ringoverUrl;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Créer un iframe invisible pour forcer l'ouverture
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = ringoverUrl;
+        document.body.appendChild(iframe);
         
-        // Si Ringover ne s'ouvre pas après 500ms, utiliser tel:
+        // Après 1 seconde, si Ringover ne s'est pas ouvert, utiliser tel:
         setTimeout(() => {
+          document.body.removeChild(iframe);
+          const telUrl = `tel:${formattedNumber}`;
           window.location.href = telUrl;
-        }, 500);
+          console.log('✅ Fallback: Ouverture de l\'app téléphone');
+        }, 1000);
         
-        console.log('✅ Tentative d\'ouverture de Ringover, fallback sur tel:');
+        console.log('✅ Tentative d\'ouverture de Ringover sur mobile');
+      } else {
+        // Sur desktop, essayer ringover://
+        const ringoverUrl = `ringover://call/${formattedNumber}`;
+        window.location.href = ringoverUrl;
+        console.log('✅ Tentative d\'ouverture de Ringover sur desktop');
       }
     } catch (e) {
       console.error('❌ Erreur lors de l\'ouverture:', e);
-      // Fallback : utiliser tel:
+      // Dernier fallback : utiliser tel:
+      const telUrl = `tel:${formattedNumber}`;
       window.location.href = telUrl;
     }
     

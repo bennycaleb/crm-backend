@@ -1,4 +1,4 @@
-const express = require('express');
+ const express = require('express');
 const router = express.Router();
 const RingoverCall = require('../models/RingoverCall');
 const Order = require('../models/Order');
@@ -433,6 +433,75 @@ router.put('/calls/:id/status', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: error.message 
+    });
+  }
+});
+
+// POST /api/ringover/initiate-call - Initier un appel via l'API Ringover
+router.post('/initiate-call', async (req, res) => {
+  try {
+    const { phoneNumber, userId } = req.body;
+    
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        error: 'Numéro de téléphone requis'
+      });
+    }
+
+    const apiKey = process.env.RINGOVER_API_KEY;
+    
+    if (!apiKey) {
+      return res.status(500).json({
+        success: false,
+        error: 'Clé API Ringover non configurée. Veuillez configurer RINGOVER_API_KEY dans les variables d\'environnement.'
+      });
+    }
+
+    // Format du numéro pour Ringover
+    let formattedNumber = phoneNumber.replace(/\D/g, '');
+    if (formattedNumber.startsWith('0')) {
+      formattedNumber = '+33' + formattedNumber.substring(1);
+    } else if (!formattedNumber.startsWith('+')) {
+      formattedNumber = '+33' + formattedNumber;
+    }
+
+    // Appel à l'API Ringover pour initier l'appel
+    const ringoverResponse = await fetch('https://public-api.ringover.com/v2/actions/call', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Access-Token': apiKey
+      },
+      body: JSON.stringify({
+        phone_number: formattedNumber,
+        user_id: userId || null
+      })
+    });
+
+    if (!ringoverResponse.ok) {
+      const errorData = await ringoverResponse.text();
+      console.error('❌ Erreur API Ringover:', errorData);
+      return res.status(ringoverResponse.status).json({
+        success: false,
+        error: `Erreur Ringover: ${errorData}`
+      });
+    }
+
+    const result = await ringoverResponse.json();
+    
+    console.log('✅ Appel initié via Ringover:', result);
+    
+    res.json({
+      success: true,
+      message: 'Appel initié avec succès',
+      data: result
+    });
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'initiation de l\'appel:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
     });
   }
 });
