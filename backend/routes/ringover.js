@@ -474,12 +474,21 @@ router.post('/initiate-call', async (req, res) => {
 
     // Format du numéro du client (to_number) pour Ringover
     // Ringover attend un integer (int64) sans le + ni les espaces
-    let toNumber = phoneNumber.replace(/\D/g, '');
-    if (toNumber.startsWith('0')) {
-      toNumber = '33' + toNumber.substring(1); // Format: 33611223344
-    } else if (toNumber.startsWith('+33')) {
-      toNumber = toNumber.replace('+33', '33');
+    // Format attendu: 33611223344 (33 + numéro sans le 0 initial)
+    let toNumber = phoneNumber.replace(/\D/g, ''); // Enlever tous les caractères non numériques
+    
+    // Si le numéro commence par 33, on le garde tel quel
+    if (toNumber.startsWith('33') && toNumber.length > 2) {
+      // Le numéro est déjà au format international (33...)
+      // Vérifier qu'il n'y a pas de double 33
+      if (toNumber.startsWith('3333')) {
+        toNumber = '33' + toNumber.substring(4); // Enlever le double 33
+      }
+    } else if (toNumber.startsWith('0')) {
+      // Numéro français commençant par 0, remplacer par 33
+      toNumber = '33' + toNumber.substring(1);
     } else if (!toNumber.startsWith('33')) {
+      // Numéro sans indicatif, ajouter 33
       toNumber = '33' + toNumber;
     }
 
@@ -515,6 +524,7 @@ router.post('/initiate-call', async (req, res) => {
     console.log('  - API Key présent:', !!apiKey);
     console.log('  - API Key longueur:', apiKey ? apiKey.length : 0);
     console.log('  - API Key (premiers 10 caractères):', apiKey ? apiKey.substring(0, 10) + '...' : 'N/A');
+    console.log('  - Request Body:', JSON.stringify(requestBody));
 
     // Essayer d'abord avec "Bearer {token}", puis sans si ça ne fonctionne pas
     // Certaines APIs Ringover peuvent nécessiter le format Bearer
@@ -525,6 +535,7 @@ router.post('/initiate-call', async (req, res) => {
 
     let ringoverResponse;
     let lastError;
+    let responseText = null;
     
     // Essayer les deux formats d'authentification
     for (let i = 0; i < authHeaders.length; i++) {
@@ -532,6 +543,7 @@ router.post('/initiate-call', async (req, res) => {
       console.log(`  - Tentative ${i + 1}/2 avec format: ${i === 0 ? 'Direct' : 'Bearer'}`);
       
       try {
+        console.log(`  - Authorization header: ${authHeader.substring(0, 20)}...`);
         ringoverResponse = await fetch('https://public-api.ringover.com/v2/callback', {
           method: 'POST',
           headers: {
@@ -541,13 +553,16 @@ router.post('/initiate-call', async (req, res) => {
           body: JSON.stringify(requestBody)
         });
 
+        // Lire le body une seule fois
+        responseText = await ringoverResponse.text();
+
         // Si on obtient une réponse autre que 401, on arrête
         if (ringoverResponse.status !== 401) {
           console.log(`  ✅ Format ${i === 0 ? 'Direct' : 'Bearer'} fonctionne (Status: ${ringoverResponse.status})`);
           break;
         } else {
           console.log(`  ❌ Format ${i === 0 ? 'Direct' : 'Bearer'} échoue (401 Unauthorized)`);
-          lastError = await ringoverResponse.text();
+          lastError = responseText; // Stocker l'erreur sans relire le body
         }
       } catch (error) {
         console.error(`  ❌ Erreur avec format ${i === 0 ? 'Direct' : 'Bearer'}:`, error.message);
@@ -563,8 +578,7 @@ router.post('/initiate-call', async (req, res) => {
       });
     }
 
-    // Récupérer la réponse (texte ou JSON)
-    const responseText = await ringoverResponse.text();
+    // Utiliser le texte déjà lu (ne pas relire le body)
     let errorData = responseText;
 
     // Essayer de parser en JSON si possible
