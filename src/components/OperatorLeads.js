@@ -135,8 +135,9 @@ const OperatorLeads = () => {
       formattedNumber = '+33' + phoneNumber;
     }
     
-    // Essayer d'abord d'initier l'appel via l'API Ringover
+    // PRIORITÉ 1: Essayer d'initier l'appel via l'API Ringover (utilise les minutes Ringover)
     try {
+      console.log('📞 Tentative d\'initiation d\'appel via API Ringover...');
       const response = await fetch(`${API_URL}/api/ringover/initiate-call`, {
         method: 'POST',
         headers: {
@@ -151,43 +152,32 @@ const OperatorLeads = () => {
       const result = await response.json();
       
       if (result.success) {
-        console.log('✅ Appel initié via API Ringover');
+        console.log('✅ Appel initié via API Ringover - L\'appel passera par votre ligne Ringover');
+        alert('✅ Appel initié via Ringover !\n\nL\'appel va sonner sur votre application Ringover.\nDécrochez depuis Ringover pour utiliser vos minutes d\'appel.');
         // Mettre à jour le statut du lead
         updateLeadStatus(lead._id, 'en_appel');
-        return;
+        return; // IMPORTANT: Ne pas continuer, l'appel est déjà initié
       } else {
-        console.warn('⚠️ Impossible d\'initier l\'appel via API, fallback sur protocole');
+        console.warn('⚠️ Impossible d\'initier l\'appel via API:', result.error);
+        alert(`⚠️ Impossible d'initier l'appel via l'API Ringover.\n\nErreur: ${result.error}\n\nVérifiez que RINGOVER_API_KEY est configurée dans Render.`);
       }
     } catch (apiError) {
-      console.warn('⚠️ Erreur API Ringover, fallback sur protocole:', apiError);
+      console.error('❌ Erreur API Ringover:', apiError);
+      alert(`❌ Erreur lors de l'initiation de l'appel via l'API Ringover.\n\nVérifiez que RINGOVER_API_KEY est configurée dans Render.`);
     }
     
-    // Fallback : Utiliser tel: pour ouvrir l'app téléphone
-    // Sur Safari mobile, ringover:// ne fonctionne pas, donc on utilise directement tel:
-    try {
-      // Détecter si on est sur mobile Safari
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const isSafari = /Safari/i.test(navigator.userAgent) && !/Chrome|CriOS|FxiOS/i.test(navigator.userAgent);
-      
-      if (isMobile || isSafari) {
-        // Sur mobile ou Safari, utiliser directement tel: (ouvre l'app téléphone)
-        // L'opérateur pourra ensuite utiliser Ringover depuis l'app téléphone
-        const telUrl = `tel:${formattedNumber}`;
-        window.location.href = telUrl;
-        console.log('✅ Ouverture de l\'app téléphone avec:', telUrl);
-        console.log('ℹ️ Utilisez Ringover depuis l\'app téléphone pour appeler');
-      } else {
-        // Sur desktop (non-Safari), essayer ringover://
-        const ringoverUrl = `ringover://call/${formattedNumber}`;
-        window.location.href = ringoverUrl;
-        console.log('✅ Tentative d\'ouverture de Ringover sur desktop');
-      }
-    } catch (e) {
-      console.error('❌ Erreur lors de l\'ouverture:', e);
-      // Dernier fallback : utiliser tel:
-      const telUrl = `tel:${formattedNumber}`;
-      window.location.href = telUrl;
-    }
+    // FALLBACK: Si l'API Ringover n'a pas fonctionné, on ne peut pas utiliser tel:
+    // car cela utiliserait les minutes du téléphone, pas celles de Ringover
+    // On affiche un message d'erreur clair
+    alert(`❌ Impossible d'initier l'appel via Ringover.\n\n` +
+          `Pour utiliser vos minutes Ringover, l'API doit être configurée.\n\n` +
+          `Vérifiez que:\n` +
+          `1. RINGOVER_API_KEY est configurée dans Render\n` +
+          `2. La clé API a les permissions pour initier des appels\n\n` +
+          `Numéro à appeler: ${formattedNumber}\n` +
+          `Vous pouvez copier ce numéro et l'appeler manuellement depuis l'app Ringover.`);
+    
+    console.error('❌ L\'appel ne peut pas être initié. L\'API Ringover est nécessaire pour utiliser les minutes Ringover.');
     
     // Mettre à jour le statut du lead
     updateLeadStatus(lead._id, 'en_appel');
