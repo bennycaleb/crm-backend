@@ -452,12 +452,23 @@ router.post('/initiate-call', async (req, res) => {
       });
     }
 
-    const apiKey = process.env.RINGOVER_API_KEY;
+    let apiKey = process.env.RINGOVER_API_KEY;
     
     if (!apiKey) {
       return res.status(500).json({
         success: false,
         error: 'Clé API Ringover non configurée. Veuillez configurer RINGOVER_API_KEY dans les variables d\'environnement.'
+      });
+    }
+
+    // Nettoyer la clé API (enlever les espaces, retours à la ligne, etc.)
+    apiKey = apiKey.trim();
+    
+    // Vérifier que la clé n'est pas vide après nettoyage
+    if (!apiKey) {
+      return res.status(500).json({
+        success: false,
+        error: 'Clé API Ringover vide après nettoyage. Vérifiez la variable RINGOVER_API_KEY dans Render.'
       });
     }
 
@@ -502,17 +513,55 @@ router.post('/initiate-call', async (req, res) => {
     console.log('  - to_number:', toNumberInt);
     console.log('  - from_number:', fromNumber);
     console.log('  - API Key présent:', !!apiKey);
+    console.log('  - API Key longueur:', apiKey ? apiKey.length : 0);
+    console.log('  - API Key (premiers 10 caractères):', apiKey ? apiKey.substring(0, 10) + '...' : 'N/A');
 
-    // Appel à l'API Ringover pour initier le callback
-    // Endpoint: POST https://public-api.ringover.com/v2/callback
-    const ringoverResponse = await fetch('https://public-api.ringover.com/v2/callback', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': apiKey // Ringover utilise 'Authorization' header avec la clé API directement
-      },
-      body: JSON.stringify(requestBody)
-    });
+    // Essayer d'abord avec "Bearer {token}", puis sans si ça ne fonctionne pas
+    // Certaines APIs Ringover peuvent nécessiter le format Bearer
+    const authHeaders = [
+      apiKey, // Format 1: Clé API directement
+      `Bearer ${apiKey}`, // Format 2: Bearer + clé API
+    ];
+
+    let ringoverResponse;
+    let lastError;
+    
+    // Essayer les deux formats d'authentification
+    for (let i = 0; i < authHeaders.length; i++) {
+      const authHeader = authHeaders[i];
+      console.log(`  - Tentative ${i + 1}/2 avec format: ${i === 0 ? 'Direct' : 'Bearer'}`);
+      
+      try {
+        ringoverResponse = await fetch('https://public-api.ringover.com/v2/callback', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader
+          },
+          body: JSON.stringify(requestBody)
+        });
+
+        // Si on obtient une réponse autre que 401, on arrête
+        if (ringoverResponse.status !== 401) {
+          console.log(`  ✅ Format ${i === 0 ? 'Direct' : 'Bearer'} fonctionne (Status: ${ringoverResponse.status})`);
+          break;
+        } else {
+          console.log(`  ❌ Format ${i === 0 ? 'Direct' : 'Bearer'} échoue (401 Unauthorized)`);
+          lastError = await ringoverResponse.text();
+        }
+      } catch (error) {
+        console.error(`  ❌ Erreur avec format ${i === 0 ? 'Direct' : 'Bearer'}:`, error.message);
+        lastError = error.message;
+      }
+    }
+
+    // Si aucune réponse n'a été obtenue, retourner une erreur
+    if (!ringoverResponse) {
+      return res.status(500).json({
+        success: false,
+        error: `Erreur d'authentification Ringover. Tous les formats ont échoué. Dernière erreur: ${lastError || 'Inconnue'}`
+      });
+    }
 
     // Récupérer la réponse (texte ou JSON)
     const responseText = await ringoverResponse.text();
