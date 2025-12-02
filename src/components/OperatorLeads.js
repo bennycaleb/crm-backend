@@ -162,32 +162,22 @@ const OperatorLeads = () => {
       console.warn('⚠️ Erreur API Ringover, fallback sur protocole:', apiError);
     }
     
-    // Fallback : Essayer d'ouvrir Ringover avec le protocole
+    // Fallback : Utiliser tel: pour ouvrir l'app téléphone
+    // Sur Safari mobile, ringover:// ne fonctionne pas, donc on utilise directement tel:
     try {
-      // Détecter si on est sur mobile
+      // Détecter si on est sur mobile Safari
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const isSafari = /Safari/i.test(navigator.userAgent) && !/Chrome|CriOS|FxiOS/i.test(navigator.userAgent);
       
-      if (isMobile) {
-        // Sur mobile, essayer d'abord ringover://, puis fallback sur tel:
-        const ringoverUrl = `ringover://call/${formattedNumber}`;
-        
-        // Créer un iframe invisible pour forcer l'ouverture
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = ringoverUrl;
-        document.body.appendChild(iframe);
-        
-        // Après 1 seconde, si Ringover ne s'est pas ouvert, utiliser tel:
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-          const telUrl = `tel:${formattedNumber}`;
-          window.location.href = telUrl;
-          console.log('✅ Fallback: Ouverture de l\'app téléphone');
-        }, 1000);
-        
-        console.log('✅ Tentative d\'ouverture de Ringover sur mobile');
+      if (isMobile || isSafari) {
+        // Sur mobile ou Safari, utiliser directement tel: (ouvre l'app téléphone)
+        // L'opérateur pourra ensuite utiliser Ringover depuis l'app téléphone
+        const telUrl = `tel:${formattedNumber}`;
+        window.location.href = telUrl;
+        console.log('✅ Ouverture de l\'app téléphone avec:', telUrl);
+        console.log('ℹ️ Utilisez Ringover depuis l\'app téléphone pour appeler');
       } else {
-        // Sur desktop, essayer ringover://
+        // Sur desktop (non-Safari), essayer ringover://
         const ringoverUrl = `ringover://call/${formattedNumber}`;
         window.location.href = ringoverUrl;
         console.log('✅ Tentative d\'ouverture de Ringover sur desktop');
