@@ -489,32 +489,72 @@ router.post('/initiate-call', async (req, res) => {
     // Convertir to_number en integer
     const toNumberInt = parseInt(toNumber, 10);
 
+    // Préparer le body de la requête
+    const requestBody = {
+      to_number: toNumberInt, // Numéro du client (integer)
+      from_number: fromNumber, // Numéro de l'opérateur (integer ou null)
+      timeout: 45, // Timeout en secondes (20-300)
+      device: 'ALL' // Appeler sur tous les appareils de l'opérateur
+    };
+
+    console.log('📞 Tentative d\'appel Ringover:');
+    console.log('  - Endpoint: https://public-api.ringover.com/v2/callback');
+    console.log('  - to_number:', toNumberInt);
+    console.log('  - from_number:', fromNumber);
+    console.log('  - API Key présent:', !!apiKey);
+
     // Appel à l'API Ringover pour initier le callback
     // Endpoint: POST https://public-api.ringover.com/v2/callback
     const ringoverResponse = await fetch('https://public-api.ringover.com/v2/callback', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': apiKey // Ringover utilise 'Authorization' header
+        'Authorization': apiKey // Ringover utilise 'Authorization' header avec la clé API directement
       },
-      body: JSON.stringify({
-        to_number: toNumberInt, // Numéro du client (integer)
-        from_number: fromNumber, // Numéro de l'opérateur (integer ou null)
-        timeout: 45, // Timeout en secondes (20-300)
-        device: 'ALL' // Appeler sur tous les appareils de l'opérateur
-      })
+      body: JSON.stringify(requestBody)
     });
 
+    // Récupérer la réponse (texte ou JSON)
+    const responseText = await ringoverResponse.text();
+    let errorData = responseText;
+
+    // Essayer de parser en JSON si possible
+    try {
+      const jsonData = JSON.parse(responseText);
+      errorData = jsonData;
+    } catch (e) {
+      // Si ce n'est pas du JSON, garder le texte
+    }
+
     if (!ringoverResponse.ok) {
-      const errorData = await ringoverResponse.text();
-      console.error('❌ Erreur API Ringover:', errorData);
+      console.error('❌ Erreur API Ringover:');
+      console.error('  - Status:', ringoverResponse.status);
+      console.error('  - Status Text:', ringoverResponse.statusText);
+      console.error('  - Response:', errorData);
+      
+      // Message d'erreur plus détaillé
+      let errorMessage = `Erreur Ringover (${ringoverResponse.status}): `;
+      if (typeof errorData === 'object' && errorData.message) {
+        errorMessage += errorData.message;
+      } else if (typeof errorData === 'string') {
+        errorMessage += errorData;
+      } else {
+        errorMessage += JSON.stringify(errorData);
+      }
+
       return res.status(ringoverResponse.status).json({
         success: false,
-        error: `Erreur Ringover: ${errorData}`
+        error: errorMessage
       });
     }
 
-    const result = await ringoverResponse.json();
+    // Parser la réponse JSON
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (e) {
+      result = { message: 'Appel initié avec succès' };
+    }
     
     console.log('✅ Callback initié via Ringover:', result);
     console.log('📞 Workflow: Ringover va appeler l\'opérateur, puis le client automatiquement');
