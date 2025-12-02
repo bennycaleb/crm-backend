@@ -405,16 +405,20 @@ router.post('/reassign-channels', async (req, res) => {
     let reassigned = 0;
     let notFound = 0;
 
+    // Récupérer tous les canaux une seule fois
+    const allChannels = await Channel.find({ isActive: true });
+    console.log(`🔍 Canaux disponibles pour réassignation:`, allChannels.map(c => ({ name: c.name, productName: c.productName })));
+
     for (const order of ordersWithoutChannel) {
       let matchingChannel = null;
       const source = order.channel || '';
+      
+      console.log(`🔍 Traitement commande ${order._id}, source: ${source}, produits:`, order.products?.map(p => p.name));
 
-      // Chercher par source
+      // Méthode 1: Chercher par source
       if (source && source.includes('landing-page-')) {
         const sourceProduct = source.replace('landing-page-', '').replace(/-/g, ' ');
         const normalizedSource = sourceProduct.replace(/\s+/g, '').toLowerCase();
-
-        const allChannels = await Channel.find({ isActive: true });
         
         for (const channel of allChannels) {
           const normalizedChannelName = channel.name.replace(/\s+/g, '').toLowerCase();
@@ -425,8 +429,45 @@ router.post('/reassign-channels', async (req, res) => {
               normalizedSource.includes(normalizedChannelName) ||
               normalizedSource.includes(normalizedProductName)) {
             matchingChannel = channel;
+            console.log(`✅ Canal trouvé par source: ${source} -> ${channel.name}`);
             break;
           }
+        }
+      }
+
+      // Méthode 2: Chercher par nom du produit dans la commande
+      if (!matchingChannel && order.products && order.products.length > 0) {
+        const productName = order.products[0].name;
+        const normalizedProduct = productName.replace(/\s+/g, '').toLowerCase();
+        
+        for (const channel of allChannels) {
+          const normalizedChannelName = channel.name.replace(/\s+/g, '').toLowerCase();
+          const normalizedProductName = channel.productName.replace(/\s+/g, '').toLowerCase();
+
+          // Chercher si le nom du produit contient le nom du canal ou vice versa
+          if (normalizedProduct.includes(normalizedChannelName) ||
+              normalizedProduct.includes(normalizedProductName) ||
+              normalizedChannelName.includes(normalizedProduct) ||
+              normalizedProductName.includes(normalizedProduct)) {
+            matchingChannel = channel;
+            console.log(`✅ Canal trouvé par produit: ${productName} -> ${channel.name}`);
+            break;
+          }
+        }
+      }
+
+      // Méthode 3: Si le canal "MR BIG" existe et que le source contient "mrbig" ou "mr big"
+      if (!matchingChannel) {
+        const mrBigChannel = allChannels.find(ch => 
+          ch.name.toLowerCase().includes('mr big') || 
+          ch.name.toLowerCase().includes('mrbig') ||
+          ch.productName.toLowerCase().includes('mr big') ||
+          ch.productName.toLowerCase().includes('mrbig')
+        );
+        
+        if (mrBigChannel && (source.includes('mrbig') || source.includes('mr-big'))) {
+          matchingChannel = mrBigChannel;
+          console.log(`✅ Canal MR BIG trouvé par source: ${source}`);
         }
       }
 
@@ -443,7 +484,7 @@ router.post('/reassign-channels', async (req, res) => {
         console.log(`✅ Commande ${order._id} réassignée au canal: ${matchingChannel.name}`);
       } else {
         notFound++;
-        console.log(`⚠️ Aucun canal trouvé pour commande ${order._id}, source: ${source}`);
+        console.log(`⚠️ Aucun canal trouvé pour commande ${order._id}, source: ${source}, produit: ${order.products?.[0]?.name || 'N/A'}`);
       }
     }
 
