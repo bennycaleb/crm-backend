@@ -524,7 +524,27 @@ router.post('/initiate-call', async (req, res) => {
     console.log('  - API Key présent:', !!apiKey);
     console.log('  - API Key longueur:', apiKey ? apiKey.length : 0);
     console.log('  - API Key (premiers 10 caractères):', apiKey ? apiKey.substring(0, 10) + '...' : 'N/A');
+    console.log('  - API Key (derniers 10 caractères):', apiKey ? '...' + apiKey.substring(apiKey.length - 10) : 'N/A');
     console.log('  - Request Body:', JSON.stringify(requestBody));
+    
+    // Test d'authentification avec un endpoint simple pour vérifier si la clé fonctionne
+    try {
+      console.log('  🔍 Test d\'authentification avec /teams...');
+      const testResponse = await fetch('https://public-api.ringover.com/v2/teams', {
+        method: 'GET',
+        headers: {
+          'Authorization': apiKey
+        }
+      });
+      console.log(`  - Test /teams: Status ${testResponse.status}`);
+      if (testResponse.status === 401) {
+        console.log('  ⚠️ La clé API n\'est pas valide ou n\'a pas les permissions nécessaires');
+      } else if (testResponse.ok) {
+        console.log('  ✅ Authentification réussie avec /teams');
+      }
+    } catch (testError) {
+      console.log('  ⚠️ Erreur lors du test d\'authentification:', testError.message);
+    }
 
     // Essayer d'abord avec "Bearer {token}", puis sans si ça ne fonctionne pas
     // Certaines APIs Ringover peuvent nécessiter le format Bearer
@@ -555,6 +575,14 @@ router.post('/initiate-call', async (req, res) => {
 
         // Lire le body une seule fois
         responseText = await ringoverResponse.text();
+        
+        // Afficher les headers de la réponse pour diagnostic
+        console.log(`  - Response Headers:`, {
+          'content-type': ringoverResponse.headers.get('content-type'),
+          'content-length': ringoverResponse.headers.get('content-length'),
+          'www-authenticate': ringoverResponse.headers.get('www-authenticate')
+        });
+        console.log(`  - Response Body (premiers 200 caractères):`, responseText.substring(0, 200));
 
         // Si on obtient une réponse autre que 401, on arrête
         if (ringoverResponse.status !== 401) {
@@ -562,7 +590,8 @@ router.post('/initiate-call', async (req, res) => {
           break;
         } else {
           console.log(`  ❌ Format ${i === 0 ? 'Direct' : 'Bearer'} échoue (401 Unauthorized)`);
-          lastError = responseText; // Stocker l'erreur sans relire le body
+          console.log(`  - Message d'erreur:`, responseText || '(vide)');
+          lastError = responseText || '401 Unauthorized - Réponse vide de Ringover'; // Stocker l'erreur sans relire le body
         }
       } catch (error) {
         console.error(`  ❌ Erreur avec format ${i === 0 ? 'Direct' : 'Bearer'}:`, error.message);
