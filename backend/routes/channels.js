@@ -351,5 +351,93 @@ router.get('/operator/:operatorId/orders', async (req, res) => {
   }
 });
 
+// GET /api/channels/debug/:operatorId - Route de diagnostic pour vérifier l'état
+router.get('/debug/:operatorId', async (req, res) => {
+  try {
+    const operatorId = req.params.operatorId;
+    
+    // 1. Vérifier l'opérateur
+    const operator = await User.findById(operatorId);
+    if (!operator) {
+      return res.json({
+        success: false,
+        error: 'Opérateur non trouvé',
+        operatorId
+      });
+    }
+    
+    // 2. Vérifier les canaux de l'opérateur
+    const channels = await Channel.find({
+      'assignedOperators.operatorId': operatorId,
+      'assignedOperators.isActive': true,
+      isActive: true
+    });
+    
+    const channelIds = channels.map(ch => ch._id);
+    
+    // 3. Vérifier les commandes avec assignedChannel
+    const ordersWithChannel = await Order.find({
+      assignedChannel: { $in: channelIds },
+      status: 'external_pending'
+    });
+    
+    // 4. Vérifier toutes les commandes external_pending (pour voir celles sans canal)
+    const allExternalPending = await Order.find({
+      status: 'external_pending'
+    });
+    
+    // 5. Vérifier les commandes sans canal
+    const ordersWithoutChannel = await Order.find({
+      status: 'external_pending',
+      assignedChannel: null
+    });
+    
+    res.json({
+      success: true,
+      debug: {
+        operator: {
+          id: operator._id,
+          username: operator.username,
+          role: operator.role
+        },
+        channels: {
+          total: channels.length,
+          channels: channels.map(ch => ({
+            id: ch._id,
+            name: ch.name,
+            productName: ch.productName,
+            isActive: ch.isActive,
+            assignedOperators: ch.assignedOperators.filter(op => op.isActive).length
+          }))
+        },
+        orders: {
+          totalExternalPending: allExternalPending.length,
+          withChannel: ordersWithChannel.length,
+          withoutChannel: ordersWithoutChannel.length,
+          ordersWithChannel: ordersWithChannel.map(o => ({
+            id: o._id,
+            clientName: o.clientName,
+            clientPhone: o.clientPhone,
+            assignedChannel: o.assignedChannel,
+            source: o.channel
+          })),
+          ordersWithoutChannel: ordersWithoutChannel.map(o => ({
+            id: o._id,
+            clientName: o.clientName,
+            clientPhone: o.clientPhone,
+            source: o.channel
+          }))
+        }
+      }
+    });
+  } catch (error) {
+    console.error('❌ Erreur diagnostic:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
 
