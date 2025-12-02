@@ -437,10 +437,13 @@ router.put('/calls/:id/status', async (req, res) => {
   }
 });
 
-// POST /api/ringover/initiate-call - Initier un appel via l'API Ringover
+// POST /api/ringover/initiate-call - Initier un appel via l'API Ringover (Callback)
+// Le callback fonctionne ainsi :
+// 1. Ringover appelle d'abord l'opérateur (from_number)
+// 2. Quand l'opérateur décroche, Ringover appelle automatiquement le client (to_number)
 router.post('/initiate-call', async (req, res) => {
   try {
-    const { phoneNumber, userId } = req.body;
+    const { phoneNumber, userId, operatorPhoneNumber } = req.body;
     
     if (!phoneNumber) {
       return res.status(400).json({
@@ -458,24 +461,47 @@ router.post('/initiate-call', async (req, res) => {
       });
     }
 
-    // Format du numéro pour Ringover
-    let formattedNumber = phoneNumber.replace(/\D/g, '');
-    if (formattedNumber.startsWith('0')) {
-      formattedNumber = '+33' + formattedNumber.substring(1);
-    } else if (!formattedNumber.startsWith('+')) {
-      formattedNumber = '+33' + formattedNumber;
+    // Format du numéro du client (to_number) pour Ringover
+    // Ringover attend un integer (int64) sans le + ni les espaces
+    let toNumber = phoneNumber.replace(/\D/g, '');
+    if (toNumber.startsWith('0')) {
+      toNumber = '33' + toNumber.substring(1); // Format: 33611223344
+    } else if (toNumber.startsWith('+33')) {
+      toNumber = toNumber.replace('+33', '33');
+    } else if (!toNumber.startsWith('33')) {
+      toNumber = '33' + toNumber;
     }
 
-    // Appel à l'API Ringover pour initier l'appel
-    const ringoverResponse = await fetch('https://public-api.ringover.com/v2/actions/call', {
+    // Format du numéro de l'opérateur (from_number) si fourni
+    let fromNumber = null;
+    if (operatorPhoneNumber) {
+      fromNumber = operatorPhoneNumber.replace(/\D/g, '');
+      if (fromNumber.startsWith('0')) {
+        fromNumber = '33' + fromNumber.substring(1);
+      } else if (fromNumber.startsWith('+33')) {
+        fromNumber = fromNumber.replace('+33', '33');
+      } else if (!fromNumber.startsWith('33')) {
+        fromNumber = '33' + fromNumber;
+      }
+      fromNumber = parseInt(fromNumber, 10); // Convertir en integer
+    }
+
+    // Convertir to_number en integer
+    const toNumberInt = parseInt(toNumber, 10);
+
+    // Appel à l'API Ringover pour initier le callback
+    // Endpoint: POST https://public-api.ringover.com/v2/callback
+    const ringoverResponse = await fetch('https://public-api.ringover.com/v2/callback', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Access-Token': apiKey
+        'Authorization': apiKey // Ringover utilise 'Authorization' header
       },
       body: JSON.stringify({
-        phone_number: formattedNumber,
-        user_id: userId || null
+        to_number: toNumberInt, // Numéro du client (integer)
+        from_number: fromNumber, // Numéro de l'opérateur (integer ou null)
+        timeout: 45, // Timeout en secondes (20-300)
+        device: 'ALL' // Appeler sur tous les appareils de l'opérateur
       })
     });
 
@@ -490,11 +516,12 @@ router.post('/initiate-call', async (req, res) => {
 
     const result = await ringoverResponse.json();
     
-    console.log('✅ Appel initié via Ringover:', result);
+    console.log('✅ Callback initié via Ringover:', result);
+    console.log('📞 Workflow: Ringover va appeler l\'opérateur, puis le client automatiquement');
     
     res.json({
       success: true,
-      message: 'Appel initié avec succès',
+      message: 'Appel initié avec succès. Ringover va appeler l\'opérateur, puis le client automatiquement.',
       data: result
     });
   } catch (error) {
