@@ -26,6 +26,48 @@ const tabs = [
   'Commandes'
 ];
 
+// Liste des produits disponibles
+const PRODUCTS = [
+  'Boric Acide',
+  'Mr Big',
+  'Libido booster for women',
+  'Horny goat weed for men',
+  'Breast and buttock two in one'
+];
+
+// Prix unitaire HT
+const UNIT_PRICE = 38.99;
+
+// Fonction pour calculer le prix HT selon la quantité avec promotions
+function calculatePriceHT(quantity) {
+  const qty = parseInt(quantity) || 0;
+  if (qty <= 0) return 0;
+  if (qty === 1) return 38.99;
+  if (qty === 2) return 58.49; // 1+1 = 38.99 + 19.50
+  if (qty === 3) return 77.98; // 2+1 = 2 * 38.99
+  if (qty === 4) return 97.48; // 2+1+50% = 2 * 38.99 + 19.50
+  if (qty === 5) return 116.97; // 3+2 = 3 * 38.99
+  if (qty === 6) return 136.47; // 3+2+50% = 3 * 38.99 + 19.50
+  if (qty === 7) return 155.96; // 4+3 = 4 * 38.99
+  if (qty === 8) return 175.46; // 4+3+50% = 4 * 38.99 + 19.50
+  if (qty === 9) return 194.95; // 5+4 = 5 * 38.99
+  
+  // Pour les quantités supérieures à 9, on applique la logique récursive
+  // Exemple: 10 = 9 + 1, 11 = 9 + 2, etc.
+  if (qty > 9) {
+    const base9 = Math.floor(qty / 9) * 194.95; // Multiples de 9
+    const remainder = qty % 9;
+    return base9 + calculatePriceHT(remainder);
+  }
+  
+  return 0;
+}
+
+// Fonction pour calculer la TVA (20%)
+function calculateTVA(priceHT) {
+  return priceHT * 0.20;
+}
+
 function getRandomDeliveryDate() {
   const now = new Date();
   const daysToAdd = Math.floor(Math.random() * 2) + 2; // 2 ou 3 jours
@@ -247,10 +289,82 @@ function CRM() {
   };
   // Modification d'une ligne du panier
   const updateCartLine = (idx, field, value) => {
-    const newCart = cart.map((item, i) =>
-      i === idx ? { ...item, [field]: value } : item
-    );
+    const newCart = cart.map((item, i) => {
+      if (i === idx) {
+        const updatedItem = { ...item, [field]: value };
+        
+        // Si la quantité change, calculer automatiquement le prix HT et la TVA
+        if (field === 'quantite') {
+          const quantite = parseInt(value) || 0;
+          if (quantite > 0 && updatedItem.produit) {
+            const prixHT = calculatePriceHT(quantite);
+            const tva = calculateTVA(prixHT);
+            updatedItem.prix = prixHT.toFixed(2);
+            updatedItem.tva = tva.toFixed(2);
+          } else {
+            updatedItem.prix = '';
+            updatedItem.tva = '';
+          }
+        }
+        
+        // Si le produit change, recalculer le prix si une quantité existe déjà
+        if (field === 'produit' && value) {
+          const quantite = parseInt(updatedItem.quantite) || 1;
+          const prixHT = calculatePriceHT(quantite);
+          const tva = calculateTVA(prixHT);
+          updatedItem.quantite = quantite.toString();
+          updatedItem.prix = prixHT.toFixed(2);
+          updatedItem.tva = tva.toFixed(2);
+        }
+        
+        // Si le produit est supprimé, réinitialiser les champs
+        if (field === 'produit' && !value) {
+          updatedItem.quantite = '';
+          updatedItem.prix = '';
+          updatedItem.tva = '';
+        }
+        
+        // Garder les frais de livraison vides par défaut
+        if (field !== 'frais' && !updatedItem.frais) {
+          updatedItem.frais = '';
+        }
+        
+        return updatedItem;
+      }
+      return item;
+    });
     setCart(newCart);
+  };
+
+  // Calcul du total du panier - Option A : Additionner toutes les quantités puis appliquer la règle de promotion
+  const calculateCartTotal = () => {
+    // Additionner toutes les quantités de tous les produits
+    const totalQuantite = cart.reduce((sum, item) => {
+      const quantite = parseInt(item.quantite) || 0;
+      return sum + quantite;
+    }, 0);
+    
+    // Appliquer la règle de promotion sur le total des quantités
+    const totalHT = calculatePriceHT(totalQuantite);
+    
+    // Calculer la TVA sur le total HT
+    const totalTVA = calculateTVA(totalHT);
+    
+    // Additionner tous les frais de livraison
+    const totalFrais = cart.reduce((sum, item) => {
+      const frais = parseFloat(item.frais) || 0;
+      return sum + frais;
+    }, 0);
+    
+    const totalTTC = totalHT + totalTVA + totalFrais;
+    
+    return {
+      totalHT: totalHT.toFixed(2),
+      totalTVA: totalTVA.toFixed(2),
+      totalFrais: totalFrais.toFixed(2),
+      totalTTC: totalTTC.toFixed(2),
+      totalQuantite: totalQuantite
+    };
   };
   // Déconnexion
   const navigate = useNavigate();
@@ -750,28 +864,80 @@ function CRM() {
                     <React.Fragment key={idx}>
                       <div className="crm-field">
                         <label>Nom de produit</label>
-                        <input type="text" value={item.produit} onChange={e => updateCartLine(idx, 'produit', e.target.value)} />
+                        <select value={item.produit} onChange={e => updateCartLine(idx, 'produit', e.target.value)} style={{width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd'}}>
+                          <option value="">Sélectionner un produit</option>
+                          {PRODUCTS.map((product, pIdx) => (
+                            <option key={pIdx} value={product}>{product}</option>
+                          ))}
+                        </select>
                       </div>
                       <div className="crm-field">
-                        <label>Prix</label>
-                        <input type="number" value={item.prix} onChange={e => updateCartLine(idx, 'prix', e.target.value)} />
+                        <label>Prix (HT)</label>
+                        <input type="number" value={item.prix} readOnly style={{backgroundColor: '#f5f5f5', cursor: 'not-allowed'}} />
                       </div>
                       <div className="crm-field">
                         <label>Quantité</label>
-                        <input type="number" value={item.quantite} onChange={e => updateCartLine(idx, 'quantite', e.target.value)} />
+                        <input type="number" min="1" value={item.quantite} onChange={e => updateCartLine(idx, 'quantite', e.target.value)} />
                       </div>
                       <div className="crm-field">
                         <label>Frais de livraison</label>
-                        <input type="number" value={item.frais} onChange={e => updateCartLine(idx, 'frais', e.target.value)} />
+                        <input type="number" value={item.frais || ''} onChange={e => updateCartLine(idx, 'frais', e.target.value)} placeholder="0.00" />
                       </div>
                       <div className="crm-field">
-                        <label>TVA</label>
-                        <input type="number" value={item.tva} onChange={e => updateCartLine(idx, 'tva', e.target.value)} />
+                        <label>TVA (20%)</label>
+                        <input type="number" value={item.tva} readOnly style={{backgroundColor: '#f5f5f5', cursor: 'not-allowed'}} />
                       </div>
                     </React.Fragment>
                   ))}
                 </div>
                 <button type="button" className="crm-btn-add" onClick={addCartLine}>Ajouter un produit</button>
+                
+                {/* Affichage du total du panier */}
+                {cart.some(item => item.produit && item.quantite) && (
+                  <div style={{
+                    marginTop: '20px',
+                    padding: '15px',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '8px',
+                    border: '1px solid #dee2e6'
+                  }}>
+                    <div style={{
+                      marginBottom: '12px',
+                      paddingBottom: '8px',
+                      borderBottom: '1px solid #dee2e6',
+                      fontSize: '0.9rem',
+                      color: '#666'
+                    }}>
+                      <span style={{fontWeight: 600}}>Total des quantités : </span>
+                      <span style={{fontWeight: 700, color: '#e53935'}}>{calculateCartTotal().totalQuantite} produit(s)</span>
+                      <span style={{marginLeft: '8px', fontSize: '0.85rem'}}>(Calcul avec promotions appliquées sur le total)</span>
+                    </div>
+                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
+                      <span style={{fontWeight: 600, color: '#333'}}>Total HT :</span>
+                      <span style={{fontWeight: 700, color: '#333'}}>{calculateCartTotal().totalHT} €</span>
+                    </div>
+                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
+                      <span style={{fontWeight: 600, color: '#333'}}>Total TVA (20%) :</span>
+                      <span style={{fontWeight: 700, color: '#333'}}>{calculateCartTotal().totalTVA} €</span>
+                    </div>
+                    {parseFloat(calculateCartTotal().totalFrais) > 0 && (
+                      <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
+                        <span style={{fontWeight: 600, color: '#333'}}>Frais de livraison :</span>
+                        <span style={{fontWeight: 700, color: '#333'}}>{calculateCartTotal().totalFrais} €</span>
+                      </div>
+                    )}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      paddingTop: '10px',
+                      borderTop: '2px solid #dee2e6',
+                      marginTop: '10px'
+                    }}>
+                      <span style={{fontWeight: 700, fontSize: '1.1rem', color: '#e53935'}}>Total TTC :</span>
+                      <span style={{fontWeight: 700, fontSize: '1.1rem', color: '#e53935'}}>{calculateCartTotal().totalTTC} €</span>
+                    </div>
+                  </div>
+                )}
               </div>
               {showTreatmentTimer && (
                 <div className="treatment-timer-block">
