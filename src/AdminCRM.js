@@ -560,14 +560,20 @@ function AdminCRM() {
         body: JSON.stringify({ username, password })
       });
 
-      if (!res.ok) throw new Error('Erreur lors de l\'approbation');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'Erreur lors de l\'approbation' }));
+        throw new Error(errorData.message || 'Erreur lors de l\'approbation');
+      }
       
       // Rafraîchir la liste des demandes
-      const updatedRequests = await fetch(`${API_URL}/api/requests`).then(r => r.json());
+      const requestsRes = await fetch(`${API_URL}/api/requests`);
+      if (!requestsRes.ok) throw new Error('Erreur lors du rafraîchissement des demandes');
+      const updatedRequests = await requestsRes.json();
       setRegistrationRequests(updatedRequests);
       
       alert('Demande approuvée avec succès');
     } catch (e) {
+      console.error('Erreur lors de l\'approbation:', e);
       alert('Erreur lors de l\'approbation: ' + e.message);
     }
   };
@@ -584,14 +590,20 @@ function AdminCRM() {
         body: JSON.stringify({ reason })
       });
 
-      if (!res.ok) throw new Error('Erreur lors du refus');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'Erreur lors du refus' }));
+        throw new Error(errorData.message || 'Erreur lors du refus');
+      }
       
       // Rafraîchir la liste des demandes
-      const updatedRequests = await fetch(`${API_URL}/api/requests`).then(r => r.json());
+      const requestsRes = await fetch(`${API_URL}/api/requests`);
+      if (!requestsRes.ok) throw new Error('Erreur lors du rafraîchissement des demandes');
+      const updatedRequests = await requestsRes.json();
       setRegistrationRequests(updatedRequests);
       
       alert('Demande refusée avec succès');
     } catch (e) {
+      console.error('Erreur lors du refus:', e);
       alert('Erreur lors du refus: ' + e.message);
     }
   };
