@@ -6,16 +6,26 @@ const axios = require('axios');
 const sendToGlnet = async (req, res) => {
   try {
     const order = req.body;
+    console.log('\n=== ENVOI À GL-NET ===');
     console.log('gl-net: Données reçues:', JSON.stringify(order, null, 2));
+    
+    // Vérifier que l'URL et la clé API sont configurées
+    if (!process.env.GLNET_API_URL) {
+      throw new Error('GLNET_API_URL n\'est pas configurée dans les variables d\'environnement');
+    }
+    if (!process.env.GLNET_API_KEY) {
+      throw new Error('GLNET_API_KEY n\'est pas configurée dans les variables d\'environnement');
+    }
     
     // Utiliser directement le payload reçu
     const payload = order;
     console.log('gl-net: Payload formaté:', JSON.stringify(payload, null, 2));
     console.log('gl-net: URL utilisée:', process.env.GLNET_API_URL);
+    console.log('gl-net: API Key configurée:', process.env.GLNET_API_KEY ? 'Oui (masquée)' : 'Non');
     console.log('gl-net: Headers envoyés:', JSON.stringify({
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'apiKey': process.env.GLNET_API_KEY
+      'apiKey': process.env.GLNET_API_KEY ? '***' : 'MANQUANTE'
     }, null, 2));
     console.log('gl-net: Envoi à l\'API...');
 
@@ -31,30 +41,47 @@ const sendToGlnet = async (req, res) => {
         },
         validateStatus: function (status) {
           return status >= 200 && status < 500; // Accepte tous les statuts entre 200 et 499
-        }
+        },
+        timeout: 30000 // 30 secondes de timeout
       });
 
       console.log('gl-net: Status de la réponse:', response.status);
-      console.log('gl-net: Headers de la réponse:', response.headers);
+      console.log('gl-net: Headers de la réponse:', JSON.stringify(response.headers, null, 2));
       console.log('gl-net: Réponse reçue:', JSON.stringify(response.data, null, 2));
 
       if (response.status === 405) {
         throw new Error('Méthode HTTP non autorisée. Vérifiez la documentation de l\'API gl-net.');
       }
 
+      if (response.status >= 400) {
+        console.error('gl-net: Erreur dans la réponse:', response.status, response.data);
+        throw new Error(`Erreur gl-net (${response.status}): ${JSON.stringify(response.data)}`);
+      }
+
+      console.log('=== ENVOI RÉUSSI ===\n');
       res.json({ 
         message: `Commande ${order.Shipping?.Reference || 'inconnue'} envoyée à gl-net avec succès`,
         glnetResponse: response.data
       });
     } catch (apiError) {
-      console.error('gl-net: Erreur API:', apiError.response ? apiError.response.data : apiError.message);
+      console.error('gl-net: Erreur API détaillée:');
+      console.error('- Message:', apiError.message);
+      console.error('- Code:', apiError.code);
+      console.error('- Status:', apiError.response?.status);
+      console.error('- Data:', apiError.response?.data);
+      console.error('- Headers:', apiError.response?.headers);
+      console.error('=== FIN ERREUR ===\n');
       throw apiError;
     }
   } catch (error) {
     console.error('gl-net: Erreur détaillée:', error);
-    res.status(500).json({
+    const errorMessage = error.response?.data 
+      ? JSON.stringify(error.response.data) 
+      : error.message;
+    res.status(error.response?.status || 500).json({
       message: 'Erreur lors de l\'envoi à gl-net',
-      error: error.response ? error.response.data : error.message
+      error: errorMessage,
+      details: error.response?.data || error.message
     });
   }
 };

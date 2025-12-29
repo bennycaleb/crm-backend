@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
 const Channel = require('../models/Channel');
+const glnet = require('./glnet');
 
 // GET /api/orders - Récupérer toutes les commandes
 router.get('/', async (req, res) => {
@@ -179,7 +180,6 @@ router.post('/:id/send-to-glnet', async (req, res) => {
       return res.status(404).json({ error: 'Commande non trouvée' });
     }
 
-    // Simuler l'envoi à gl-net (ici vous pouvez intégrer l'API gl-net réelle)
     console.log('Envoi de la commande à gl-net:', {
       orderId: order._id,
       clientName: order.clientName,
@@ -188,18 +188,103 @@ router.post('/:id/send-to-glnet', async (req, res) => {
       totalAmount: order.totalAmount
     });
 
-    // Mettre à jour le statut de la commande
+    // Mapper la commande Order au format gl-net
+    const uniqueReference = `ORDER-${order._id}-${Date.now()}`;
+    const addressParts = (order.address || '').split(',').map(s => s.trim());
+    
+    // Préparer les informations de source pour gl-net
+    const sourceInfo = [];
+    if (order.channel) {
+      sourceInfo.push(`Canal: ${order.channel}`);
+    }
+    if (order.operator) {
+      sourceInfo.push(`Opérateur: ${order.operator}`);
+    }
+    const notesText = sourceInfo.length > 0 ? sourceInfo.join(' | ') : 'CRM';
+    
+    const glnetPayload = {
+      Shipping: {
+        Account: "TEST",
+        Reference: uniqueReference,
+        TransitGatewayId: "CDG",
+        Agent: " FR-NTUPS ",
+        ServiceCode: "ECO",
+        COD: 0,
+        OnLineCOD: 0,
+        IOSS: "",
+        Incoterm: "DDP",
+        WeightUnit: "kg",
+        DimensionUnit: "cm",
+        Currency: "EUR",
+        OrderFulfillment: true,
+        Warehouse: "CDG"
+      },
+      Consignee: {
+        CompanyName: "",
+        ContactName: order.clientName || "Destinataire inconnu",
+        Street: addressParts[0] || "Adresse inconnue",
+        AddressLine2: addressParts[1] || "",
+        AddressLine3: "",
+        PostCode: addressParts[addressParts.length - 1]?.match(/\d{5}/)?.[0] || "00000",
+        City: addressParts[addressParts.length - 1]?.replace(/\d{5}/, '').trim() || "Ville inconnue",
+        State: "",
+        Country: "FR",
+        Email: order.email || "noemail@example.com",
+        Phone: order.clientPhone || "0000000000",
+        SecondPhone: "",
+        Eori: "",
+        Notes: notesText,
+        Reference1: order.channel || "CRM",
+        Reference2: order.operator || ""
+      },
+      Items: order.products?.map(item => ({
+        Code: item.sku || "",
+        Reference: "",
+        Description: item.name || "Produit",
+        GoodsOrigin: "",
+        HSCode: "",
+        Quantity: item.quantity || 1,
+        Value: item.price ? parseFloat(item.price) : 0,
+        Weight: 0.1,
+        Dutiable: true
+      })) || [
+        {
+          Code: "",
+          Reference: "",
+          Description: "Produit",
+          GoodsOrigin: "",
+          HSCode: "",
+          Quantity: 1,
+          Value: order.totalAmount || 0,
+          Weight: 0.1,
+          Dutiable: true
+        }
+      ]
+    };
+
+    console.log('Payload formaté pour glnet:', JSON.stringify(glnetPayload, null, 2));
+
+    // Créer une nouvelle requête avec le payload
+    const glnetReq = {
+      ...req,
+      body: glnetPayload
+    };
+    
+    // Appeler la fonction sendToGlnet
+    await glnet.sendToGlnet(glnetReq, res);
+
+    // Mettre à jour le statut de la commande seulement si l'envoi a réussi
     order.status = 'sent_to_glnet';
     order.sentToGlNetAt = new Date();
     await order.save();
 
-    res.json({ 
-      message: 'Commande envoyée à gl-net avec succès',
-      order 
-    });
   } catch (error) {
     console.error('Erreur lors de l\'envoi à gl-net:', error);
-    res.status(500).json({ error: 'Erreur serveur', details: error.message });
+    res.status(500).json({ 
+      error: 'Erreur serveur', 
+      details: error.message,
+      message: 'Erreur lors de l\'envoi à gl-net: ' + error.message
+    });
   }
 });
 

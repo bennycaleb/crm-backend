@@ -359,7 +359,7 @@ function AdminCRM() {
       });
 
       // Envoyer à gl-net
-      const glnetResponse = await fetch(`${API_URL}/api/shopify/send-to-glnet/${order.id}`, {
+      const glnetResponse = await fetch(`${API_URL}/api/orders/${order.id}/send-to-glnet`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(order)
