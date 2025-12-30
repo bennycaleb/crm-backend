@@ -30,15 +30,30 @@ const sendToGlnet = async (req, res) => {
     console.log('gl-net: Envoi à l\'API...');
 
     try {
+      // Essayer différents formats de headers selon la documentation gl-net
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+      
+      // Ajouter la clé API - essayer plusieurs formats possibles
+      if (process.env.GLNET_API_KEY) {
+        // Format 1: apiKey dans les headers (comme dans l'email)
+        headers['apiKey'] = process.env.GLNET_API_KEY;
+        // Format 2: Authorization Bearer (alternative)
+        // headers['Authorization'] = `Bearer ${process.env.GLNET_API_KEY}`;
+        // Format 3: X-API-Key (alternative)
+        // headers['X-API-Key'] = process.env.GLNET_API_KEY;
+      }
+      
+      console.log('gl-net: Headers finaux:', JSON.stringify(headers, null, 2));
+      console.log('gl-net: URL complète:', process.env.GLNET_API_URL);
+      
       const response = await axios({
         method: 'POST',
         url: process.env.GLNET_API_URL,
         data: payload,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'apiKey': process.env.GLNET_API_KEY
-        },
+        headers: headers,
         validateStatus: function (status) {
           return status >= 200 && status < 500; // Accepte tous les statuts entre 200 et 499
         },
@@ -50,7 +65,16 @@ const sendToGlnet = async (req, res) => {
       console.log('gl-net: Réponse reçue:', JSON.stringify(response.data, null, 2));
 
       if (response.status === 405) {
-        throw new Error('Méthode HTTP non autorisée. Vérifiez la documentation de l\'API gl-net.');
+        const errorDetails = {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+          data: response.data,
+          url: process.env.GLNET_API_URL,
+          method: 'POST'
+        };
+        console.error('gl-net: Erreur 405 - Détails complets:', JSON.stringify(errorDetails, null, 2));
+        throw new Error(`Méthode HTTP non autorisée (405). URL: ${process.env.GLNET_API_URL}. Vérifiez la documentation de l'API gl-net ou le Swagger UI.`);
       }
 
       if (response.status >= 400) {
