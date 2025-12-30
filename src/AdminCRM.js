@@ -375,7 +375,20 @@ function AdminCRM() {
       alert('Commande envoyée à gl-net avec succès !');
     } catch (error) {
       console.error('Erreur:', error);
-      alert('Erreur lors de l\'envoi à gl-net: ' + error.message);
+      let errorMessage = error.message;
+      
+      // Essayer d'extraire le message d'erreur détaillé de la réponse
+      if (error.response?.data) {
+        const data = error.response.data;
+        errorMessage = data.details || data.error || data.message || error.message;
+        
+        // Message spécial pour les variables d'environnement manquantes
+        if (data.hint) {
+          errorMessage += '\n\n' + data.hint;
+        }
+      }
+      
+      alert('Erreur lors de l\'envoi à gl-net:\n\n' + errorMessage);
     }
   };
 

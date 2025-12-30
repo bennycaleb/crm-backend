@@ -75,13 +75,26 @@ const sendToGlnet = async (req, res) => {
     }
   } catch (error) {
     console.error('gl-net: Erreur détaillée:', error);
-    const errorMessage = error.response?.data 
-      ? JSON.stringify(error.response.data) 
-      : error.message;
+    
+    // Message d'erreur plus explicite
+    let errorMessage = error.message;
+    let errorDetails = error.message;
+    
+    if (error.message.includes('GLNET_API_URL') || error.message.includes('GLNET_API_KEY')) {
+      errorMessage = 'Configuration gl-net manquante. Veuillez configurer GLNET_API_URL et GLNET_API_KEY dans les variables d\'environnement.';
+      errorDetails = error.message;
+    } else if (error.response?.data) {
+      errorMessage = error.response.data.message || JSON.stringify(error.response.data);
+      errorDetails = error.response.data;
+    }
+    
     res.status(error.response?.status || 500).json({
       message: 'Erreur lors de l\'envoi à gl-net',
       error: errorMessage,
-      details: error.response?.data || error.message
+      details: errorDetails,
+      hint: error.message.includes('GLNET_API') 
+        ? 'Configurez les variables d\'environnement GLNET_API_URL et GLNET_API_KEY sur Render' 
+        : undefined
     });
   }
 };
