@@ -31,23 +31,22 @@ const sendToGlnet = async (req, res) => {
 
     try {
       // Essayer différents formats de headers selon la documentation gl-net
+      // Format 1: apiKey dans les headers (essayé en premier)
+      // Format 2: X-API-Key (format alternatif)
+      // Format 3: Authorization header
       const headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       };
       
-      // Ajouter la clé API - essayer plusieurs formats possibles
+      // Ajouter la clé API - essayer le format apiKey d'abord
       if (process.env.GLNET_API_KEY) {
-        // Format 1: apiKey dans les headers (comme dans l'email)
         headers['apiKey'] = process.env.GLNET_API_KEY;
-        // Format 2: Authorization Bearer (alternative)
-        // headers['Authorization'] = `Bearer ${process.env.GLNET_API_KEY}`;
-        // Format 3: X-API-Key (alternative)
-        // headers['X-API-Key'] = process.env.GLNET_API_KEY;
+        // Essayer aussi X-API-Key comme format alternatif
+        headers['X-API-Key'] = process.env.GLNET_API_KEY;
       }
       
       console.log('gl-net: Headers finaux:', JSON.stringify(headers, null, 2));
-      console.log('gl-net: URL complète:', process.env.GLNET_API_URL);
       
       const response = await axios({
         method: 'POST',
@@ -65,16 +64,7 @@ const sendToGlnet = async (req, res) => {
       console.log('gl-net: Réponse reçue:', JSON.stringify(response.data, null, 2));
 
       if (response.status === 405) {
-        const errorDetails = {
-          status: response.status,
-          statusText: response.statusText,
-          headers: response.headers,
-          data: response.data,
-          url: process.env.GLNET_API_URL,
-          method: 'POST'
-        };
-        console.error('gl-net: Erreur 405 - Détails complets:', JSON.stringify(errorDetails, null, 2));
-        throw new Error(`Méthode HTTP non autorisée (405). URL: ${process.env.GLNET_API_URL}. Vérifiez la documentation de l'API gl-net ou le Swagger UI.`);
+        throw new Error('Méthode HTTP non autorisée. Vérifiez la documentation de l\'API gl-net.');
       }
 
       if (response.status >= 400) {
