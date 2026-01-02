@@ -30,23 +30,19 @@ const sendToGlnet = async (req, res) => {
     console.log('gl-net: Envoi à l\'API...');
 
     try {
-      // Essayer différents formats de headers selon la documentation gl-net
-      // Format 1: apiKey dans les headers (essayé en premier)
-      // Format 2: X-API-Key (format alternatif)
-      // Format 3: Authorization header
+      // Format des headers selon le Swagger gl-net
+      // Le Swagger indique: "ApiKeyAuth": { "type": "apiKey", "in": "header", "name": "apiKey" }
       const headers = {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'apiKey': process.env.GLNET_API_KEY
       };
       
-      // Ajouter la clé API - essayer le format apiKey d'abord
-      if (process.env.GLNET_API_KEY) {
-        headers['apiKey'] = process.env.GLNET_API_KEY;
-        // Essayer aussi X-API-Key comme format alternatif
-        headers['X-API-Key'] = process.env.GLNET_API_KEY;
-      }
-      
-      console.log('gl-net: Headers finaux:', JSON.stringify(headers, null, 2));
+      console.log('gl-net: Headers finaux:', JSON.stringify({
+        'Content-Type': headers['Content-Type'],
+        'Accept': headers['Accept'],
+        'apiKey': '***'
+      }, null, 2));
       
       const response = await axios({
         method: 'POST',
@@ -62,6 +58,15 @@ const sendToGlnet = async (req, res) => {
       console.log('gl-net: Status de la réponse:', response.status);
       console.log('gl-net: Headers de la réponse:', JSON.stringify(response.headers, null, 2));
       console.log('gl-net: Réponse reçue:', JSON.stringify(response.data, null, 2));
+
+      // Selon le Swagger, la réponse attendue pour /shipments/booking est 204 (No Content) pour un succès
+      if (response.status === 204) {
+        console.log('=== ENVOI RÉUSSI (204 No Content) ===\n');
+        return res.json({ 
+          message: `Commande ${order.Shipping?.Reference || 'inconnue'} envoyée à gl-net avec succès`,
+          success: true
+        });
+      }
 
       if (response.status === 405) {
         throw new Error('Méthode HTTP non autorisée. Vérifiez la documentation de l\'API gl-net.');

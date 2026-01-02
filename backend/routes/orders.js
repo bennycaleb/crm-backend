@@ -219,6 +219,24 @@ router.post('/:id/send-to-glnet', async (req, res) => {
         OrderFulfillment: true,
         Warehouse: "CDG"
       },
+      Shipper: {
+        CompanyName: "C-InnovaTech Solutions",
+        ContactName: "",
+        Street: "60 rue François 1er",
+        AddressLine2: "",
+        AddressLine3: "",
+        PostCode: "75008",
+        City: "Paris",
+        State: "",
+        Country: "FR",
+        Email: "info@c-innovatech.com",
+        Phone: "+33666368595",
+        SecondPhone: "",
+        Eori: "",
+        Notes: "",
+        Reference1: "",
+        Reference2: ""
+      },
       Consignee: {
         CompanyName: "",
         ContactName: order.clientName || "Destinataire inconnu",
