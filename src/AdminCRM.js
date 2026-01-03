@@ -366,7 +366,16 @@ function AdminCRM() {
       });
 
       if (!glnetResponse.ok) {
-        throw new Error('Erreur lors de l\'envoi à gl-net');
+        // Essayer d'extraire le message d'erreur détaillé
+        let errorData;
+        try {
+          errorData = await glnetResponse.json();
+        } catch (e) {
+          errorData = { message: 'Erreur serveur', details: glnetResponse.statusText };
+        }
+        const errorMessage = errorData.details || errorData.error || errorData.message || `Erreur ${glnetResponse.status}: ${glnetResponse.statusText}`;
+        console.error('Erreur détaillée du serveur:', errorData);
+        throw new Error(errorMessage);
       }
 
       const updated = [...orders];
