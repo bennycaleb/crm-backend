@@ -289,20 +289,49 @@ router.post('/:id/send-to-glnet', async (req, res) => {
     };
     
     // Appeler la fonction sendToGlnet
-    await glnet.sendToGlnet(glnetReq, res);
-
-    // Mettre à jour le statut de la commande seulement si l'envoi a réussi
-    order.status = 'sent_to_glnet';
-    order.sentToGlNetAt = new Date();
-    await order.save();
+    // Utiliser une promesse pour capturer les erreurs même si sendToGlnet envoie déjà une réponse
+    try {
+      await glnet.sendToGlnet(glnetReq, res);
+      
+      // Si on arrive ici, l'envoi a réussi
+      // Mettre à jour le statut de la commande seulement si l'envoi a réussi
+      if (!res.headersSent) {
+        order.status = 'sent_to_glnet';
+        order.sentToGlNetAt = new Date();
+        await order.save();
+        res.json({ 
+          message: 'Commande envoyée à gl-net avec succès',
+          order 
+        });
+      } else {
+        // La réponse a déjà été envoyée par sendToGlnet, mettre à jour le statut
+        order.status = 'sent_to_glnet';
+        order.sentToGlNetAt = new Date();
+        await order.save();
+      }
+    } catch (glnetError) {
+      // Si sendToGlnet a déjà envoyé une réponse, ne rien faire
+      if (res.headersSent) {
+        console.log('Réponse déjà envoyée par sendToGlnet');
+        return;
+      }
+      // Sinon, propager l'erreur pour qu'elle soit gérée par le catch externe
+      throw glnetError;
+    }
 
   } catch (error) {
     console.error('Erreur lors de l\'envoi à gl-net:', error);
-    res.status(500).json({ 
-      error: 'Erreur serveur', 
-      details: error.message,
-      message: 'Erreur lors de l\'envoi à gl-net: ' + error.message
-    });
+    console.error('Stack:', error.stack);
+    
+    // S'assurer qu'une réponse JSON est toujours envoyée
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: 'Erreur serveur', 
+        details: error.message,
+        message: 'Erreur lors de l\'envoi à gl-net: ' + error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
+    }
   }
 });
 
