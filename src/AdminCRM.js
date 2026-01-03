@@ -359,10 +359,10 @@ function AdminCRM() {
       });
 
       // Envoyer à gl-net
+      // Pas besoin d'envoyer le body, la route récupère la commande par ID
       const glnetResponse = await fetch(`${API_URL}/api/orders/${order.id}/send-to-glnet`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(order)
+        headers: { 'Content-Type': 'application/json' }
       });
 
       if (!glnetResponse.ok) {

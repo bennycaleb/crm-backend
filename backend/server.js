@@ -81,10 +81,10 @@ app.use(cors({
       // Autoriser aussi tous les domaines Netlify pour les landing pages
       if (origin && origin.includes('.netlify.app')) {
         console.log('✅ Origin Netlify autorisé:', origin);
-        callback(null, true);
-      } else {
-        console.log('🚫 Origin bloqué:', origin);
-        callback(new Error('Not allowed by CORS'));
+      callback(null, true);
+    } else {
+      console.log('🚫 Origin bloqué:', origin);
+      callback(new Error('Not allowed by CORS'));
       }
     }
   },
@@ -108,9 +108,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware pour parser le JSON
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Middleware pour parser le JSON avec limite augmentée (50MB)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Configuration de multer pour traiter les fichiers PDF
 const storage = multer.memoryStorage();
