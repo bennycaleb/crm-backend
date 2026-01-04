@@ -11,7 +11,7 @@ const sendToNextera = async (req, res) => {
     // Mapping conforme au Swagger gl-net
     const payload = {
       Shipping: {
-        Account: "TEST",
+        Account: "CITS",
         Reference: order.reference || "REF-XXX",
         TransitGatewayId: "CDG",
         Agent: "FR-NTUPS",
@@ -106,7 +106,7 @@ const sendToNextera = async (req, res) => {
 
     try {
       const response = await axios.post(
-        'https://shipping.traxis.app/external/api/shipments/booking',
+        'https://traxis.app/external/api/shipments/booking',
         payload,
         {
           headers: {
