@@ -77,6 +77,14 @@ const sendToGlnet = async (req, res) => {
         throw new Error(`Erreur gl-net (${response.status}): ${JSON.stringify(response.data)}`);
       }
 
+      // Vérifier si la réponse contient success: false (l'API peut retourner 200 avec success: false)
+      if (response.data && response.data.success === false) {
+        const errorMsg = response.data.errorDescription || response.data.errorCode || 'Erreur inconnue de gl-net';
+        const errorCode = response.data.errorCode || 'UNKNOWN';
+        console.error('gl-net: Réponse avec success=false:', response.data);
+        throw new Error(`Erreur gl-net (${errorCode}): ${errorMsg}`);
+      }
+
       console.log('=== ENVOI RÉUSSI ===\n');
       res.json({ 
         message: `Commande ${order.Shipping?.Reference || 'inconnue'} envoyée à gl-net avec succès`,
@@ -103,8 +111,14 @@ const sendToGlnet = async (req, res) => {
       errorMessage = 'Configuration gl-net manquante. Veuillez configurer GLNET_API_URL et GLNET_API_KEY dans les variables d\'environnement.';
       errorDetails = error.message;
     } else if (error.response?.data) {
-      errorMessage = error.response.data.message || JSON.stringify(error.response.data);
-      errorDetails = error.response.data;
+      // Gérer les réponses avec success: false
+      if (error.response.data.success === false) {
+        errorMessage = error.response.data.errorDescription || error.response.data.errorCode || error.message;
+        errorDetails = error.response.data;
+      } else {
+        errorMessage = error.response.data.message || JSON.stringify(error.response.data);
+        errorDetails = error.response.data;
+      }
     }
     
     res.status(error.response?.status || 500).json({
