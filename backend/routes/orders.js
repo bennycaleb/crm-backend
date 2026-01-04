@@ -207,7 +207,7 @@ router.post('/:id/send-to-glnet', async (req, res) => {
         Account: "CITS",
         Reference: uniqueReference,
         TransitGatewayId: "CDG",
-        Agent: " FR-NTUPS ",
+        Agent: "FR-NTUPS",
         ServiceCode: "ECO",
         COD: 0,
         OnLineCOD: 0,

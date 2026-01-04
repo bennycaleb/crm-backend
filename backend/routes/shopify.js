@@ -69,7 +69,7 @@ router.post('/shopify/send-to-glnet/:orderId', async (req, res) => {
         Account: "CITS",
       Reference: uniqueReference,
       TransitGatewayId: "CDG",
-        Agent: " FR-NTUPS ",
+        Agent: "FR-NTUPS",
       ServiceCode: "ECO",
       COD: 0,
       OnLineCOD: 0,
