@@ -204,7 +204,7 @@ router.post('/:id/send-to-glnet', async (req, res) => {
     
     const glnetPayload = {
       Shipping: {
-        Account: "TEST",
+        Account: "CITS",
         Reference: uniqueReference,
         TransitGatewayId: "CDG",
         Agent: " FR-NTUPS ",

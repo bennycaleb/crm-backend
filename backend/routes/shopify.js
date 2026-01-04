@@ -65,8 +65,8 @@ router.post('/shopify/send-to-glnet/:orderId', async (req, res) => {
   const firstItem = shopify.line_items && shopify.line_items[0] ? shopify.line_items[0] : {};
   const uniqueReference = `SHOPIFY-${orderId}-${Date.now()}`;
   const glnetPayload = {
-    Shipping: {
-      Account: "TEST",
+      Shipping: {
+        Account: "CITS",
       Reference: uniqueReference,
       TransitGatewayId: "CDG",
         Agent: " FR-NTUPS ",
