@@ -1,0 +1,30 @@
+================================================================================
+  CRM Backend — archive de production (contenu = dossier dist/)
+================================================================================
+
+1) Décompresse cette archive dans le répertoire racine de ton application Node
+   (là où tu configures le démarrage sur ton hébergeur).
+
+2) Sur le serveur (SSH ou terminal), dans ce dossier :
+     npm install
+   (ou npm ci si tu utilises le package-lock inclus)
+   Le script "npm run build" dans ce paquet ne fait qu’une vérification — pas besoin
+   de dossier scripts/ sur le serveur.
+
+3) Variables d'environnement (panneau hébergeur), au minimum :
+     MONGODB_URI
+     JWT_SECRET
+     NODE_ENV=production
+   (et les autres clés que tu utilises : GLNET_*, Ringover, etc.)
+
+4) Commande de démarrage :
+     npm start
+   ou :
+     node server.js
+
+5) Le serveur écoute sur le PORT fourni par l’hébergeur (process.env.PORT) et
+   sur 0.0.0.0 par défaut.
+
+6) Test : GET https://ton-domaine/api/health
+
+================================================================================

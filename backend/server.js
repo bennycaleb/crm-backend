@@ -189,6 +189,19 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Diagnostic MongoDB (sans secrets) — ouvrir dans le navigateur si login renvoie 500
+app.get('/api/health/database', (req, res) => {
+  const st = mongoose.connection.readyState;
+  const labels = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
+  const ok = st === 1;
+  res.status(ok ? 200 : 503).json({
+    mongo: labels[st] || String(st),
+    readyState: st,
+    ok,
+    database: ok && mongoose.connection.db ? mongoose.connection.db.databaseName : null
+  });
+});
+
 // Routes
 app.use('/api', registrationRoutes);
 app.use('/api', shopifyRoutes);
@@ -266,7 +279,8 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`Serveur démarré sur le port ${PORT}`);
+const HOST = process.env.HOST || '0.0.0.0';
+server.listen(PORT, HOST, () => {
+  console.log(`Serveur démarré sur ${HOST}:${PORT}`);
   console.log(`Environnement: ${process.env.NODE_ENV || 'development'}`);
 }); 
